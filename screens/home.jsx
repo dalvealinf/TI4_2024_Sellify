@@ -12,12 +12,13 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 export default function PaginaPrincipal({ navigation }) {
   const funcionalidades = [
-    { nombre: 'Escanear Productos', icono: 'barcode-scan', color: ['#007B83', '#00B2A9'] },
+    { nombre: 'Escanear Productos', icono: 'barcode-scan', color: ['#007B83', '#00B2A9'], screen: 'BarcodeScannerPage' },
     { nombre: 'Revisar Inventario', icono: 'archive-outline', color: ['#005A9E', '#007BFF'] },
-    { nombre: 'Editar Inventario', icono: 'pencil-outline', color: ['#563D7C', '#6F42C1'] },
+    { nombre: 'Editar Inventario', icono: 'pencil-outline', color: ['#563D7C', '#6F42C1']},
+    { nombre: 'Historial de Ventas', icono: 'book-outline', color: ['#135123', '#066547'], screen: 'HistorialVentas' },
     { nombre: 'Agregar Productos', icono: 'plus-box-outline', color: ['#DAA520', '#FFD700'], screen: 'AddProduct' },
     { nombre: 'Gestionar Usuarios', icono: 'account-multiple-plus-outline', color: ['#6C757D', '#ADB5BD'] },
-    { nombre: 'Estadísticas', icono: 'chart-pie', color: ['#28A745', '#8BC34A'] },
+    { nombre: 'Estadísticas', icono: 'chart-pie', color: ['#28A745', '#8BC34A'], screen: 'DashBoard'  },
   ];
 
   const slideAnim = useRef(new Animated.Value(200)).current;
@@ -77,6 +78,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#34495E',
     borderRadius: 10,
     marginBottom: 20,
+    
   },
   headerTitle: {
     fontSize: 22,
