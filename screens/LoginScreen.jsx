@@ -79,7 +79,7 @@ export default function Login() {
       setError(null);
       setTimeout(() => {
         setLoading(false);
-        navigation.navigate('Dashboard'); // Asegúrate de que el nombre coincida exactamente con el nombre de la pantalla en el stack
+        navigation.navigate('Home'); // Asegúrate de que el nombre coincida exactamente con el nombre de la pantalla en el stack
       }, 2000); // Simulación de 2 segundos
     }else {
       setError('Usuario o contraseña incorrectos');
