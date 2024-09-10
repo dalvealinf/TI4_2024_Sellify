@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Animated, View, Text, TextInput, Image, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
-import Icon from 'react-native-vector-icons/Feather'; 
-import { useNavigation } from '@react-navigation/native'; // Importa el hook de navegación
+import Icon from 'react-native-vector-icons/Feather';
+import { useNavigation } from '@react-navigation/native'; // Importar el hook de navegación
 
 const users = [
   { id: 1, name: 'Alice Johnson', email: 'alice@example.com', role: 'Admin', avatar: require('../assets/avatar.jpg') },
@@ -14,9 +14,9 @@ const users = [
 export default function UserManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedUser, setExpandedUser] = useState(null);
-  const [menuVisible, setMenuVisible] = useState(null); 
+  const [menuVisible, setMenuVisible] = useState(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const navigation = useNavigation(); // Hook para manejar la navegación
+  const navigation = useNavigation(); // Hook de navegación
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -33,12 +33,8 @@ export default function UserManagement() {
 
   return (
     <View style={styles.container}>
-      {/* Flecha de retroceso y Encabezado de la página */}
       <View style={styles.headerContainer}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => navigation.navigate('Home')} // Navegar a Home al presionar la flecha
-        >
+        <TouchableOpacity style={styles.backButton}>
           <Icon name="arrow-left" size={24} color="white" />
         </TouchableOpacity>
         <Animated.View style={{ opacity: fadeAnim }}>
@@ -57,7 +53,12 @@ export default function UserManagement() {
         <TouchableOpacity style={styles.searchButton}>
           <Icon name="search" size={20} color="white" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.addButton}>
+
+        {/* Redirección al añadir usuario */}
+        <TouchableOpacity 
+          style={styles.addButton}
+          onPress={() => navigation.navigate('AddUser')} // Redirige a la pantalla "AddUser"
+        >
           <Icon name="user-plus" size={20} color="white" />
           <Text style={styles.addButtonText}>Añadir</Text>
         </TouchableOpacity>
@@ -122,7 +123,6 @@ export default function UserManagement() {
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,

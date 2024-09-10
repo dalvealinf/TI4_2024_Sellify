@@ -244,7 +244,7 @@ const styles = StyleSheet.create({
   },
   pickerWrapper: {
     backgroundColor: '#4A5568',
-    borderRadius: 5,
+    borderRadius: 52,
     overflow: 'hidden', // ensures picker is contained
   },
   picker: {
