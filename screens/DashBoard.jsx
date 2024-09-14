@@ -6,12 +6,11 @@ import { Picker } from '@react-native-picker/picker';
 
 const screenWidth = Dimensions.get("window").width;
 
-export default function MobileDashboard() {
+export default function MobileDashboard({ navigation }) {
   const [selectedView, setSelectedView] = useState('week');
   const [isModalVisible, setModalVisible] = useState(false);
   const [modalContent, setModalContent] = useState(null);
 
-  // Datos para los gráficos (simplificados para móvil)
   const salesData = {
     labels: ["L", "M", "X", "J", "V", "S", "D"],
     datasets: [
@@ -70,13 +69,18 @@ export default function MobileDashboard() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
         <Text style={styles.title}>Datos en tiempo real</Text>
-        {/* Selector de tiempo */}
+      </View>
+
+      <View style={styles.pickerWrapperContainer}>
         <View style={styles.pickerWrapper}>
           <Picker
             selectedValue={selectedView}
             style={styles.picker}
-            dropdownIconColor="white"  // Cambiar color del ícono de dropdown
+            dropdownIconColor="white"
             onValueChange={(itemValue) => setSelectedView(itemValue)}
           >
             <Picker.Item label="Hoy" value="day" style={styles.pickerItem} />
@@ -210,35 +214,46 @@ export default function MobileDashboard() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#2D3748',
+    backgroundColor: '#1A2238',
   },
   contentContainer: {
     padding: 10,
-    paddingBottom: 20, // Agregamos padding inferior para evitar que la tabla esté pegada al borde
+    paddingBottom: 20,
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     alignItems: 'center',
+    paddingVertical: 15,
+    backgroundColor: '#2D3A59',
+    borderRadius: 10,
     marginBottom: 20,
+    marginHorizontal: 5,
+  },
+  backButton: {
+    position: 'absolute',
+    left: 15,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     color: 'white',
   },
+  pickerWrapperContainer: {
+    marginBottom: 20,
+  },
   pickerWrapper: {
-    backgroundColor: '#4A5568',
-    borderRadius: 5,
-    overflow: 'hidden', // para asegurar que el picker esté contenido dentro del borde redondeado
+    backgroundColor: '#2D3A59',
+    borderRadius: 52,
+    overflow: 'hidden',
   },
   picker: {
     height: 40,
-    width: 160,
+    width: '100%',
     color: 'white',
   },
   pickerItem: {
-    color: 'white',
+    color: 'black',
     fontSize: 14,
   },
   cardContainer: {
@@ -248,16 +263,16 @@ const styles = StyleSheet.create({
   },
   card: {
     flex: 1,
-    backgroundColor: '#4A5568',
+    backgroundColor: '#2D3A59',
     borderRadius: 8,
     padding: 15,
     marginHorizontal: 5,
   },
   salesCard: {
-    backgroundColor: '#9F7AEA',
+    backgroundColor: '#2D3A59',
   },
   inventoryCard: {
-    backgroundColor: '#48BB78',
+    backgroundColor: '#2D3A59',
   },
   cardTitle: {
     fontSize: 14,
@@ -276,7 +291,7 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.7)',
   },
   chartContainer: {
-    backgroundColor: '#4A5568',
+    backgroundColor: '#2D3A59',
     borderRadius: 8,
     padding: 15,
     marginBottom: 20,

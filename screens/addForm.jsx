@@ -7,10 +7,8 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
-  Animated,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { LinearGradient } from 'expo-linear-gradient';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 export default function AddProduct({ navigation }) {
@@ -33,7 +31,6 @@ export default function AddProduct({ navigation }) {
     'Verduras',
     'Bebidas',
     'Snacks',
-    // Add more categories as needed
   ];
 
   const toggleDropdown = () => {
@@ -41,37 +38,28 @@ export default function AddProduct({ navigation }) {
   };
 
   const handleAddProduct = () => {
-    // Validate required fields
-    if (
-      nombre.trim() === '' ||
-      precio === '' ||
-      stock === '' ||
-      barcode.trim() === ''
-    ) {
+    if (nombre.trim() === '' || precio === '' || stock === '' || barcode.trim() === '') {
       Alert.alert('Error', 'Por favor complete todos los campos obligatorios.');
       return;
     }
 
-    // Validate numeric fields
     if (isNaN(precio) || isNaN(stock)) {
       Alert.alert('Error', 'Precio y Stock deben ser valores numéricos.');
       return;
     }
 
-    // Validate barcode length
     if (barcode.length !== 13 || isNaN(barcode)) {
       Alert.alert('Error', 'El código de barras debe contener exactamente 13 dígitos.');
       return;
     }
 
-    // Logic to add the product goes here
     console.log({
       nombre,
       categoria,
       precio,
       stock,
-      descuento: descuento || 0, // Use 0 if no discount is provided
-      fechaCompra: fechaCompra.toISOString().split('T')[0], // Format to YYYY-MM-DD
+      descuento: descuento || 0,
+      fechaCompra: fechaCompra.toISOString().split('T')[0],
       fechaVencimiento: fechaVencimiento.toISOString().split('T')[0],
       barcode,
     });
@@ -193,13 +181,8 @@ export default function AddProduct({ navigation }) {
         keyboardType="numeric"
       />
 
-      <TouchableOpacity style={styles.button} onPress={handleAddProduct}>
-        <LinearGradient
-          colors={['#007B83', '#00B2A9']}
-          style={styles.buttonGradient}
-        >
-          <Text style={styles.buttonText}>Agregar Producto</Text>
-        </LinearGradient>
+      <TouchableOpacity style={styles.solidButton} onPress={handleAddProduct}>
+        <Text style={styles.solidButtonText}>Agregar Producto</Text>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -208,20 +191,23 @@ export default function AddProduct({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    backgroundColor: '#2C3E50',
-    padding: 20,
+    backgroundColor: '#1A2238',
+    padding: 10,
     justifyContent: 'center',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: 15,
-    backgroundColor: '#34495E', // Matching the dark background from the previous design
+    backgroundColor: '#2D3A59',
     borderRadius: 10,
     marginBottom: 20,
+    marginHorizontal: 5,
   },
   backButton: {
-    marginRight: 10,
+    position: 'absolute',
+    left: 15,
   },
   title: {
     fontSize: 22,
@@ -234,20 +220,20 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   input: {
-    backgroundColor: '#34495E',
+    backgroundColor: '#2D3A59',
     color: '#FFFFFF',
     borderRadius: 10,
     padding: 10,
     marginBottom: 15,
   },
   dropdownContainer: {
-    backgroundColor: '#34495E', // Matching the input background
+    backgroundColor: '#2D3A59',
     borderRadius: 10,
     marginBottom: 15,
-    overflow: 'hidden', // Ensures dropdown items don't overflow the container
+    overflow: 'hidden',
   },
   scrollableDropdown: {
-    maxHeight: 150, // Limit the height of the dropdown to make it scrollable
+    maxHeight: 150,
   },
   dropdownText: {
     color: '#FFFFFF',
@@ -258,22 +244,20 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#2C3E50', // Adds separation between items
+    borderBottomColor: '#2C3E50',
   },
   dateText: {
     color: '#FFFFFF',
   },
-  button: {
+  solidButton: {
     marginTop: 20,
     borderRadius: 10,
-    overflow: 'hidden',
-  },
-  buttonGradient: {
+    backgroundColor: '#3BCEAC',
     paddingVertical: 15,
     alignItems: 'center',
   },
-  buttonText: {
-    color: '#FFFFFF',
+  solidButtonText: {
+    color: '#1A2238',
     fontWeight: 'bold',
     fontSize: 16,
   },

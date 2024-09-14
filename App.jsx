@@ -1,14 +1,16 @@
 import { NavigationContainer, DarkTheme } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
+import { Provider as PaperProvider } from 'react-native-paper';
 import LoginScreen from './screens/LoginScreen';
 import PaginaPrincipal from './screens/home';
 import DashBoard from './screens/DashBoard';
 import AddProduct from './screens/addForm';
 import HistorialVentas from './screens/historialVenta';
 import DetalleVenta from './screens/detalleVenta';
-
+import BarcodeScannerPage from './screens/scan';
+import UserManagement from './screens/GestionUsuarios';
+import AddUser from './screens/addUsuario';
 const Stack = createStackNavigator();
-
 export default function App() {
   return (
     <NavigationContainer theme={DarkTheme}>
@@ -19,6 +21,9 @@ export default function App() {
         <Stack.Screen name="AddProduct" component={AddProduct} />
         <Stack.Screen name="HistorialVentas" component={HistorialVentas} />
         <Stack.Screen name="DetalleVenta" component={DetalleVenta} />
+        <Stack.Screen name="BarcodeScannerPage" component={BarcodeScannerPage} />
+        <Stack.Screen name="UserManagement" component={UserManagement} />
+        <Stack.Screen name="AddUser" component={AddUser} />
       </Stack.Navigator>
     </NavigationContainer>
   );

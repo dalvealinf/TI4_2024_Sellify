@@ -4,12 +4,9 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 
 export default function DetalleVenta({ route }) {
-  // Recibir detalles de la venta
   const { venta } = route.params;
-
   const navigation = useNavigation();
 
-  // Mostrar cada producto
   const renderProducto = ({ item }) => (
     <View style={styles.productoContainer}>
       <Text style={styles.productoNombre}>{item.nombre}</Text>
@@ -42,19 +39,27 @@ export default function DetalleVenta({ route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#2C3E50',
+    backgroundColor: '#1A2238',
     padding: 20,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 15,
+    backgroundColor: '#2D3A59',
+    borderRadius: 10,
     marginBottom: 20,
+    marginHorizontal: 5,
+  },
+  backButton: {
+    position: 'absolute',
+    left: 15,
   },
   titulo: {
     fontSize: 22,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginBottom: 15,
   },
   subTitulo: {
     fontSize: 18,
@@ -68,7 +73,7 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   productoContainer: {
-    backgroundColor: '#34495E',
+    backgroundColor: '#2D3A59',
     padding: 10,
     borderRadius: 10,
     marginBottom: 10,
@@ -80,12 +85,5 @@ const styles = StyleSheet.create({
   productoPrecio: {
     fontSize: 14,
     color: '#BDC3C7',
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 10,
   },
 });

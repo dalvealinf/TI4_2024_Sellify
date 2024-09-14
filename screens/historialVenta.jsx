@@ -89,14 +89,16 @@ const HistorialVentas = ({ navigation }) => {
       </View>
 
       <View style={styles.inputContainer}>
-        <Button onPress={() => showMode('date')} title="Seleccionar Fecha" color="#4cd137" />
-        <Text style={styles.selectedDate}>
-          {date ? `Fecha seleccionada: ${date.toLocaleDateString()}` : 'Ninguna fecha seleccionada'}
-        </Text>
-      </View>
+  <TouchableOpacity style={styles.dateButton} onPress={() => showMode('date')}>
+    <Text style={styles.dateButtonText}>Seleccionar Fecha</Text>
+  </TouchableOpacity>
+  <Text style={styles.selectedDate}>
+    {date ? `Fecha seleccionada: ${date.toLocaleDateString()}` : 'Ninguna fecha seleccionada'}
+  </Text>
+</View>
 
       <View style={styles.clearButtonContainer}>
-        <Button onPress={limpiarFiltro} title="Limpiar Filtro" color="#e84118" />
+        <Button onPress={limpiarFiltro} title="Limpiar Filtro" color="#FF6B6B" />
       </View>
 
       {show && (
@@ -122,29 +124,41 @@ const HistorialVentas = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#2C3E50',
+    backgroundColor: '#1A2238',
     padding: 20,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 15,
+    backgroundColor: '#2D3A59',
+    borderRadius: 10,
     marginBottom: 20,
+    marginHorizontal: 5,
   },
   backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 10,
+    position: 'absolute',
+    left: 15,
   },
   titulo: {
     fontSize: 22,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginBottom: 15,
   },
   inputContainer: {
     marginBottom: 20,
+  },
+  dateButton: {
+    backgroundColor: '#3BCEAC',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+  },
+  dateButtonText: {
+    color: '#1A2238',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
   selectedDate: {
     color: '#F5F6Fa',
@@ -158,7 +172,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   ventaContainer: {
-    backgroundColor: '#34495E',
+    backgroundColor: '#2D3A59',
     padding: 15,
     borderRadius: 10,
     marginBottom: 10,
