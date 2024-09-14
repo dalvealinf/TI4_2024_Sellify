@@ -214,7 +214,7 @@ export default function MobileDashboard({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#2D3748',
+    backgroundColor: '#1A2238',
   },
   contentContainer: {
     padding: 10,
@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 15,
-    backgroundColor: '#34495E', // Light background for the header
+    backgroundColor: '#2D3A59',
     borderRadius: 10,
     marginBottom: 20,
     marginHorizontal: 5,
@@ -243,9 +243,9 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   pickerWrapper: {
-    backgroundColor: '#4A5568',
-    borderRadius: 5,
-    overflow: 'hidden', // ensures picker is contained
+    backgroundColor: '#2D3A59',
+    borderRadius: 52,
+    overflow: 'hidden',
   },
   picker: {
     height: 40,
@@ -263,16 +263,16 @@ const styles = StyleSheet.create({
   },
   card: {
     flex: 1,
-    backgroundColor: '#4A5568',
+    backgroundColor: '#2D3A59',
     borderRadius: 8,
     padding: 15,
     marginHorizontal: 5,
   },
   salesCard: {
-    backgroundColor: '#9F7AEA',
+    backgroundColor: '#2D3A59',
   },
   inventoryCard: {
-    backgroundColor: '#48BB78',
+    backgroundColor: '#2D3A59',
   },
   cardTitle: {
     fontSize: 14,
@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.7)',
   },
   chartContainer: {
-    backgroundColor: '#4A5568',
+    backgroundColor: '#2D3A59',
     borderRadius: 8,
     padding: 15,
     marginBottom: 20,

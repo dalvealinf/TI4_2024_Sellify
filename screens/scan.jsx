@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Text, View, StyleSheet, TouchableOpacity, Animated } from "react-native";
+import { Text, View, StyleSheet, TouchableOpacity, Animated, Modal } from "react-native";
 import { CameraView, Camera } from "expo-camera";
 import Icon from 'react-native-vector-icons/Ionicons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -9,6 +9,9 @@ export default function BarcodeScannerPage({ navigation }) {
   const [scanned, setScanned] = useState(false);
   const [barcodeData, setBarcodeData] = useState('');
   const [buttonOpacity] = useState(new Animated.Value(0));
+
+  // Modal states
+  const [modalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
     const getCameraPermissions = async () => {
@@ -22,12 +25,24 @@ export default function BarcodeScannerPage({ navigation }) {
   const handleBarcodeScanned = ({ type, data }) => {
     setScanned(true);
     setBarcodeData(data);
-    alert(`Código de barras tipo ${type} con datos ${data} ha sido escaneado!`);
+    // Show the modal instead of an alert
+    setModalVisible(true);
     Animated.timing(buttonOpacity, {
       toValue: 1,
       duration: 500,
       useNativeDriver: true,
     }).start();
+  };
+
+  const closeModal = () => {
+    setModalVisible(false);
+    setScanned(false); // Allow the scanner to be used again
+    setBarcodeData(''); // Clear the scanned data
+  };
+
+  const goToAddProduct = () => {
+    setModalVisible(false);
+    navigation.navigate('AddProduct', { scannedBarcode: barcodeData }); // Navigate to AddProduct and pass barcode data
   };
 
   if (hasPermission === null) {
@@ -39,6 +54,30 @@ export default function BarcodeScannerPage({ navigation }) {
 
   return (
     <View style={styles.container}>
+      {/* Modal for successful scan */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalBackground}>
+          <View style={styles.modalContainer}>
+            <Icon name="checkmark-circle" size={60} color="#4caf50" />
+            <Text style={styles.modalTitle}>¡Producto Escaneado!</Text>
+            <Text style={styles.modalMessage}>Código escaneado: {barcodeData}</Text>
+            <View style={styles.modalButtonContainer}>
+              <TouchableOpacity onPress={goToAddProduct} style={styles.addMoreButton}>
+                <Text style={styles.addMoreButtonText}>Agregar Producto</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => navigation.goBack()} style={styles.finishButton}>
+                <Text style={styles.finishButtonText}>Terminar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       {/* Header with Back Button and Title */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
@@ -55,18 +94,6 @@ export default function BarcodeScannerPage({ navigation }) {
         }}
         style={styles.camera}
       />
-
-      {/* Animated Button and Scanned Code */}
-      {scanned && (
-        <Animated.View style={[styles.bottomView, { opacity: buttonOpacity }]}>
-          <TouchableOpacity style={styles.scanButton} onPress={() => { setScanned(false); setBarcodeData(''); }}>
-            <LinearGradient colors={['#007B83', '#00B2A9']} style={styles.buttonGradient}>
-              <Text style={styles.scanButtonText}>Escanear de nuevo</Text>
-            </LinearGradient>
-          </TouchableOpacity>
-          {barcodeData ? <Text style={styles.codeText}>Código escaneado: {barcodeData}</Text> : null}
-        </Animated.View>
-      )}
     </View>
   );
 }
@@ -74,14 +101,14 @@ export default function BarcodeScannerPage({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#2C3E50",
+    backgroundColor: "#1A2238",
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center', // Centers the title
+    justifyContent: 'center',
     paddingVertical: 15,
-    backgroundColor: '#34495E', // Light background for the title
+    backgroundColor: '#2D3A59', 
     borderRadius: 20,
     marginBottom: 5,
     marginTop: 5,
@@ -89,8 +116,8 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   backButton: {
-    position: 'absolute', // Positioning it absolutely
-    left: 15, // Moves the back arrow to the right slightly
+    position: 'absolute',
+    left: 15,
   },
   title: {
     fontSize: 22,
@@ -101,33 +128,53 @@ const styles = StyleSheet.create({
     flex: 1,
     marginTop: 0,
   },
-  bottomView: {
-    position: 'absolute',
-    bottom: 50,
-    width: '100%',
+  modalBackground: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
-  scanButton: {
-    marginTop: 20,
+  modalContainer: {
+    backgroundColor: 'white',
     borderRadius: 10,
-    overflow: 'hidden',
-  },
-  buttonGradient: {
-    paddingVertical: 15,
-    paddingHorizontal: 80,
+    padding: 20,
     alignItems: 'center',
   },
-  scanButtonText: {
-    color: '#fff',
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginTop: 10,
+    marginBottom: 10,
+  },
+  modalMessage: {
     fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  modalButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  addMoreButton: {
+    backgroundColor: '#f1c40f',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    marginRight: 10,
+  },
+  addMoreButtonText: {
+    color: 'white',
     fontWeight: 'bold',
   },
-  codeText: {
-    fontSize: 16,
-    marginTop: 10,
-    padding: 10,
-    backgroundColor: "#34495E",
-    color: "#fff",
+  finishButton: {
+    backgroundColor: '#4caf50',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
     borderRadius: 5,
+  },
+  finishButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
   },
 });

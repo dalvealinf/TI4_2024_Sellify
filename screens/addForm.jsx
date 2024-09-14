@@ -7,12 +7,13 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
+  Modal,  // Add this import
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { LinearGradient } from 'expo-linear-gradient';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
-export default function AddProduct({ navigation }) {
+export default function AddProduct({ navigation, route }) {
+  const { scannedBarcode } = route.params || {};
   const [nombre, setNombre] = useState('');
   const [categoria, setCategoria] = useState('Lacteos');
   const [precio, setPrecio] = useState('');
@@ -20,11 +21,15 @@ export default function AddProduct({ navigation }) {
   const [descuento, setDescuento] = useState('');
   const [fechaCompra, setFechaCompra] = useState(new Date());
   const [fechaVencimiento, setFechaVencimiento] = useState(new Date());
-  const [barcode, setBarcode] = useState('');
+  const [barcode, setBarcode] = useState(scannedBarcode || '');;
+  const [description, setDescription] = useState('');  // Add description field
 
   const [showFechaCompraPicker, setShowFechaCompraPicker] = useState(false);
   const [showFechaVencimientoPicker, setShowFechaVencimientoPicker] = useState(false);
   const [dropdownVisible, setDropdownVisible] = useState(false);
+  
+  // Modal states
+  const [modalVisible, setModalVisible] = useState(false);
 
   const categories = [
     'Lacteos',
@@ -54,6 +59,9 @@ export default function AddProduct({ navigation }) {
       return;
     }
 
+    // Show the modal after successful product addition
+    setModalVisible(true);
+
     console.log({
       nombre,
       categoria,
@@ -63,11 +71,41 @@ export default function AddProduct({ navigation }) {
       fechaCompra: fechaCompra.toISOString().split('T')[0],
       fechaVencimiento: fechaVencimiento.toISOString().split('T')[0],
       barcode,
+      description,
     });
+  };
+
+  const closeModal = () => {
+    setModalVisible(false);
+    navigation.goBack(); // Return to the previous screen
   };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
+      {/* Modal for confirmation */}
+      <Modal
+  animationType="slide"
+  transparent={true}
+  visible={modalVisible}
+  onRequestClose={() => setModalVisible(false)}
+>
+  <View style={styles.modalBackground}>
+    <View style={styles.modalContainer}>
+      <Icon name="check-circle" size={60} color="#4caf50" />
+      <Text style={styles.modalTitle}>¡Producto Agregado!</Text>
+      <Text style={styles.modalMessage}>El nuevo producto ha sido agregado correctamente.</Text>
+      <View style={styles.modalButtonContainer}>
+        <TouchableOpacity onPress={() => { setModalVisible(false); }} style={styles.addMoreButton}>
+          <Text style={styles.addMoreButtonText}>Agregar Otro</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={closeModal} style={styles.finishButton}>
+          <Text style={styles.finishButtonText}>Terminar</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  </View>
+</Modal>
+
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Icon name="arrow-left" size={24} color="#FFFFFF" />
@@ -109,6 +147,15 @@ export default function AddProduct({ navigation }) {
           </ScrollView>
         </View>
       )}
+
+      <Text style={styles.label}>Descripción</Text>
+      <TextInput
+        style={styles.input}
+        value={description}
+        onChangeText={setDescription}
+        placeholder="Descripción del producto"
+        placeholderTextColor="#ABB2B9"
+      />
 
       <Text style={styles.label}>Precio</Text>
       <TextInput
@@ -182,22 +229,18 @@ export default function AddProduct({ navigation }) {
         keyboardType="numeric"
       />
 
-      <TouchableOpacity style={styles.button} onPress={handleAddProduct}>
-        <LinearGradient
-          colors={['#007B83', '#00B2A9']}
-          style={styles.buttonGradient}
-        >
-          <Text style={styles.buttonText}>Agregar Producto</Text>
-        </LinearGradient>
+      <TouchableOpacity style={styles.solidButton} onPress={handleAddProduct}>
+        <Text style={styles.solidButtonText}>Agregar Producto</Text>
       </TouchableOpacity>
     </ScrollView>
   );
 }
 
+
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    backgroundColor: '#2C3E50',
+    backgroundColor: '#1A2238',
     padding: 10,
     justifyContent: 'center',
   },
@@ -206,7 +249,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 15,
-    backgroundColor: '#34495E',
+    backgroundColor: '#2D3A59',
     borderRadius: 10,
     marginBottom: 20,
     marginHorizontal: 5,
@@ -226,17 +269,25 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   input: {
-    backgroundColor: '#34495E',
+    backgroundColor: '#2D3A59',
     color: '#FFFFFF',
     borderRadius: 10,
     padding: 10,
     marginBottom: 15,
+    borderColor: '#3BCEAC', // Border color for selection
+    borderWidth: 1,
+    position: 'relative', // Ensure position works properly
+    zIndex: 1, // Keep dropdown above other elements
   },
   dropdownContainer: {
-    backgroundColor: '#34495E',
+    backgroundColor: '#2D3A59',
     borderRadius: 10,
-    marginBottom: 15,
+    borderColor: '#3BCEAC',
+    borderWidth: 1,
+    marginTop: -10, // Attach to input without split
     overflow: 'hidden',
+    position: 'relative',
+    zIndex: 1,
   },
   scrollableDropdown: {
     maxHeight: 150,
@@ -250,23 +301,70 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#2C3E50',
+    borderBottomColor: '#3BCEAC',
   },
   dateText: {
     color: '#FFFFFF',
   },
-  button: {
+  solidButton: {
     marginTop: 20,
     borderRadius: 10,
-    overflow: 'hidden',
-  },
-  buttonGradient: {
+    backgroundColor: '#3BCEAC',
     paddingVertical: 15,
     alignItems: 'center',
   },
-  buttonText: {
-    color: '#FFFFFF',
+  solidButtonText: {
+    color: '#1A2238',
     fontWeight: 'bold',
     fontSize: 16,
   },
+modalBackground: {
+  flex: 1,
+  justifyContent: 'center',
+  alignItems: 'center',
+  backgroundColor: 'rgba(0, 0, 0, 0.5)',
+},
+modalContainer: {
+  backgroundColor: 'white',
+  borderRadius: 10,
+  padding: 20,
+  alignItems: 'center',
+},
+modalTitle: {
+  fontSize: 22,
+  fontWeight: 'bold',
+  marginTop: 10,
+  marginBottom: 10,
+},
+modalMessage: {
+  fontSize: 16,
+  textAlign: 'center',
+  marginBottom: 20,
+},
+modalButtonContainer: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  width: '100%',
+},
+addMoreButton: {
+  backgroundColor: '#f1c40f',
+  paddingVertical: 10,
+  paddingHorizontal: 20,
+  borderRadius: 5,
+  marginRight: 10,
+},
+addMoreButtonText: {
+  color: 'white',
+  fontWeight: 'bold',
+},
+finishButton: {
+  backgroundColor: '#4caf50',
+  paddingVertical: 10,
+  paddingHorizontal: 20,
+  borderRadius: 5,
+},
+finishButtonText: {
+  color: 'white',
+  fontWeight: 'bold',
+},
 });
