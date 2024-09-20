@@ -1,331 +1,326 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Modal } from 'react-native';
-import { BarChart, LineChart } from 'react-native-chart-kit';
+import React from 'react';
+import {
+  SafeAreaView,
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TextInput,
+  TouchableOpacity,
+  useWindowDimensions,
+  ToastAndroid, // Importamos ToastAndroid para Android (para iOS usar Alert)
+  Platform,
+  Alert,
+} from 'react-native';
+import {
+  BarChart,
+  LineChart,
+  PieChart,
+} from 'react-native-chart-kit';
 import { Ionicons } from '@expo/vector-icons';
-import { Picker } from '@react-native-picker/picker';
 
-const screenWidth = Dimensions.get("window").width;
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
-<<<<<<< HEAD
-export default function MobileDashboard({ navigation }) {
-=======
-<<<<<<< HEAD
-export default function MobileDashboard({ navigation }) {
-=======
-export default function MobileDashboard() {
->>>>>>> origin/E.-Contreras
->>>>>>> origin/E.-Contreras
-  const [selectedView, setSelectedView] = useState('week');
-  const [isModalVisible, setModalVisible] = useState(false);
-  const [modalContent, setModalContent] = useState(null);
+const salesData = [
+  { name: 'Ene', ventas: 4000, prediccion: 3800 },
+  { name: 'Feb', ventas: 3000, prediccion: 3200 },
+  { name: 'Mar', ventas: 5000, prediccion: 4800 },
+  { name: 'Abr', ventas: 4500, prediccion: 4700 },
+  { name: 'May', ventas: 6000, prediccion: 5800 },
+  { name: 'Jun', ventas: 5500, prediccion: 5700 },
+];
 
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-=======
-  // Datos para los gráficos (simplificados para móvil)
->>>>>>> origin/E.-Contreras
->>>>>>> origin/E.-Contreras
-  const salesData = {
-    labels: ["L", "M", "X", "J", "V", "S", "D"],
-    datasets: [
-      {
-        label: "Ventas",
-        data: [4500, 5200, 3800, 5700, 6100, 7200, 6800],
-        backgroundColor: "rgba(129, 140, 248, 0.6)",
-        borderColor: "rgba(129, 140, 248, 1)",
-        borderWidth: 2,
-        barPercentage: 0.6,
-      },
-    ],
-  };
+const categoryData = [
+  { name: 'Electrónicos', value: 400 },
+  { name: 'Ropa', value: 300 },
+  { name: 'Alimentos', value: 300 },
+  { name: 'Hogar', value: 200 },
+];
 
-  const inventoryData = {
-    labels: ["Ene", "Feb", "Mar", "Abr", "May", "Jun"],
-    datasets: [
-      {
-        label: "Inventario",
-        data: [1200, 1900, 2400, 2800, 3100, 3500],
-        borderColor: "#48BB78",
-        backgroundColor: "rgba(72, 187, 120, 0.2)",
-        fill: true,
-        tension: 0.4,
-        strokeWidth: 3,
-      },
-    ],
-  };
+const productPredictions = [
+  { name: 'Smartphone X', probabilidad: 0.85 },
+  { name: 'Laptop Y', probabilidad: 0.72 },
+  { name: 'Tablet Z', probabilidad: 0.68 },
+  { name: 'Smartwatch A', probabilidad: 0.61 },
+  { name: 'Auriculares B', probabilidad: 0.57 },
+];
 
-  const chartConfig = {
-    backgroundGradientFrom: "#1E3A8A",
-    backgroundGradientTo: "#1E3A8A",
-    decimalPlaces: 0,
-    color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-    labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-    style: {
-      borderRadius: 16,
-    },
-    propsForDots: {
-      r: "6",
-      strokeWidth: "2",
-      stroke: "#ffa726",
-    },
-  };
+export default function ResponsiveDashboard({ navigation }) {
+  const { width } = useWindowDimensions();
+  const chartWidth = width - 40; // Ajusta según el padding total (20 * 2)
 
-  const openModal = (content) => {
-    setModalContent(content);
-    setModalVisible(true);
-  };
-
-  const closeModal = () => {
-    setModalVisible(false);
-    setModalContent(null);
+  // Función para manejar clics en puntos de datos
+  const handleDataPointClick = (data) => {
+    const message = `Valor: ${data.value} en ${data.dataset.label || data.label}`;
+    if (Platform.OS === 'android') {
+      ToastAndroid.show(message, ToastAndroid.SHORT);
+    } else {
+      Alert.alert('Información del Punto', message);
+    }
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-      <View style={styles.header}>
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
->>>>>>> origin/E.-Contreras
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.title}>Datos en tiempo real</Text>
-      </View>
-
-      <View style={styles.pickerWrapperContainer}>
-<<<<<<< HEAD
-=======
-=======
-        <Text style={styles.title}>Datos en tiempo real</Text>
-        {/* Selector de tiempo */}
->>>>>>> origin/E.-Contreras
->>>>>>> origin/E.-Contreras
-        <View style={styles.pickerWrapper}>
-          <Picker
-            selectedValue={selectedView}
-            style={styles.picker}
-<<<<<<< HEAD
-            dropdownIconColor="white"
-=======
-<<<<<<< HEAD
-            dropdownIconColor="white"
-=======
-            dropdownIconColor="white"  // Cambiar color del ícono de dropdown
->>>>>>> origin/E.-Contreras
->>>>>>> origin/E.-Contreras
-            onValueChange={(itemValue) => setSelectedView(itemValue)}
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView contentContainerStyle={styles.container}>
+        {/* Encabezado */}
+        <View style={styles.header}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.backButton}
           >
-            <Picker.Item label="Hoy" value="day" style={styles.pickerItem} />
-            <Picker.Item label="Esta semana" value="week" style={styles.pickerItem} />
-            <Picker.Item label="Este mes" value="month" style={styles.pickerItem} />
-          </Picker>
-        </View>
-      </View>
-
-      {/* Cards for Sales and Inventory */}
-      <View style={styles.cardContainer}>
-        <View style={[styles.card, styles.salesCard]}>
-          <Text style={styles.cardTitle}>
-            <Ionicons name="cash-outline" size={16} color="white" /> Ventas
-          </Text>
-          <Text style={styles.cardContent}>$39,300</Text>
-          <Text style={styles.cardSubContent}>+15.3% vs anterior</Text>
-        </View>
-        <View style={[styles.card, styles.inventoryCard]}>
-          <Text style={styles.cardTitle}>
-            <Ionicons name="cube-outline" size={16} color="white" /> Inventario
-          </Text>
-          <Text style={styles.cardContent}>6,700</Text>
-          <Text style={styles.cardSubContent}>Productos</Text>
-        </View>
-      </View>
-
-      {/* Sales Chart */}
-      <View style={styles.chartContainer}>
-        <View style={styles.chartHeader}>
-          <Text style={styles.chartTitle}>
-            <Ionicons name="bar-chart-outline" size={20} color="#9F7AEA" /> Ventas Diarias
-          </Text>
-          <TouchableOpacity onPress={() => openModal('sales')}>
-            <Ionicons name="expand-outline" size={20} color="white" />
+            <Ionicons name="arrow-back" size={24} color="#3BCEAC" />
           </TouchableOpacity>
-        </View>
-        <BarChart
-          data={salesData}
-          width={screenWidth - 40}
-          height={260}
-          yAxisLabel="$"
-          chartConfig={chartConfig}
-          verticalLabelRotation={30}
-          showBarTops={false}
-          fromZero={true}
-          style={styles.chart}
-        />
-      </View>
-
-      {/* Inventory Chart */}
-      <View style={styles.chartContainer}>
-        <View style={styles.chartHeader}>
-          <Text style={styles.chartTitle}>
-            <Ionicons name="trending-up-outline" size={20} color="#48BB78" /> Nivel de Inventario
-          </Text>
-          <TouchableOpacity onPress={() => openModal('inventory')}>
-            <Ionicons name="expand-outline" size={20} color="white" />
-          </TouchableOpacity>
-        </View>
-        <LineChart
-          data={inventoryData}
-          width={screenWidth - 40}
-          height={260}
-          chartConfig={chartConfig}
-          bezier
-          style={styles.chart}
-        />
-      </View>
-
-      {/* Top Products List */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>
-          <Ionicons name="pricetags-outline" size={16} color="white" /> Top Productos
-        </Text>
-        <ScrollView style={{ maxHeight: 200 }}>
-          {[
-            { name: "Smartphone X", units: 1234, revenue: 617000 },
-            { name: "Laptop Pro", units: 987, revenue: 1184400 },
-            { name: "Auriculares BT", units: 1765, revenue: 158850 },
-            { name: "Smartwatch Elite", units: 843, revenue: 168600 },
-            { name: "Cámara 4K", units: 621, revenue: 248400 },
-          ].map((product, index) => (
-            <View key={index} style={styles.productRow}>
-              <View style={styles.productInfo}>
-                <Text style={styles.productName}>{product.name}</Text>
-                <Text style={styles.productUnits}>{product.units} unidades</Text>
-              </View>
-              <Text style={styles.productRevenue}>${product.revenue.toLocaleString()}</Text>
-            </View>
-          ))}
-        </ScrollView>
-      </View>
-
-      {/* Modal for Enlarged Charts */}
-      <Modal visible={isModalVisible} transparent={true} animationType="slide">
-        <View style={styles.modalContainer}>
-          <TouchableOpacity style={styles.closeButton} onPress={closeModal}>
-            <Ionicons name="close-outline" size={36} color="white" />
-          </TouchableOpacity>
-          <View style={styles.modalContent}>
-            {modalContent === 'sales' ? (
-              <BarChart
-                data={salesData}
-                width={screenWidth}
-                height={400}
-                yAxisLabel="$"
-                chartConfig={chartConfig}
-                verticalLabelRotation={30}
-                showBarTops={false}
-                fromZero={true}
-                style={styles.chart}
-              />
-            ) : modalContent === 'inventory' ? (
-              <LineChart
-                data={inventoryData}
-                width={screenWidth}
-                height={400}
-                chartConfig={chartConfig}
-                bezier
-                style={styles.chart}
-              />
-            ) : null}
+          <Text style={styles.title}>Dashboard de Ventas</Text>
+          <View style={styles.headerIcons}>
+            <Ionicons
+              name="notifications-outline"
+              size={24}
+              color="#3BCEAC"
+              style={styles.icon}
+            />
+            <Ionicons
+              name="settings-outline"
+              size={24}
+              color="#3BCEAC"
+              style={styles.icon}
+            />
           </View>
         </View>
-      </Modal>
-    </ScrollView>
+
+        {/* Barra de búsqueda */}
+        <View style={styles.searchContainer}>
+          <Ionicons name="search" size={20} color="#3BCEAC" style={styles.searchIcon} />
+          <TextInput
+            placeholder="Buscar productos..."
+            placeholderTextColor="#D1D1D1"
+            style={styles.searchInput}
+          />
+        </View>
+
+        {/* Tarjetas */}
+        <View style={styles.cardContainer}>
+          {/* Tarjeta 1 */}
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Text style={styles.cardTitle}>Ventas Totales</Text>
+              <Ionicons name="cash-outline" size={20} color="#3BCEAC" />
+            </View>
+            <Text style={styles.cardValue}>$45,231.89</Text>
+            <Text style={styles.cardSubtitle}>+20.1% del mes pasado</Text>
+          </View>
+          {/* Tarjeta 2 */}
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Text style={styles.cardTitle}>Productos Vendidos</Text>
+              <Ionicons name="cube-outline" size={20} color="#3BCEAC" />
+            </View>
+            <Text style={styles.cardValue}>1,234</Text>
+            <Text style={styles.cardSubtitle}>+15% del mes pasado</Text>
+          </View>
+          {/* Tarjeta 3 */}
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Text style={styles.cardTitle}>Nuevos Clientes</Text>
+              <Ionicons name="people-outline" size={20} color="#3BCEAC" />
+            </View>
+            <Text style={styles.cardValue}>321</Text>
+            <Text style={styles.cardSubtitle}>+5% del mes pasado</Text>
+          </View>
+        </View>
+
+        {/* Gráfico de Tendencia de Ventas vs Predicción */}
+        <View style={styles.chartContainer}>
+          <Text style={styles.chartTitle}>Tendencia de Ventas vs Predicción</Text>
+          <View style={styles.chartWrapper}>
+            <LineChart
+              data={{
+                labels: salesData.map((item) => item.name),
+                datasets: [
+                  {
+                    data: salesData.map((item) => item.ventas),
+                    color: (opacity = 1) => `rgba(59, 206, 172, ${opacity})`,
+                    strokeWidth: 2,
+                    label: 'Ventas',
+                  },
+                  {
+                    data: salesData.map((item) => item.prediccion),
+                    color: (opacity = 1) => `rgba(255, 128, 66, ${opacity})`,
+                    strokeWidth: 2,
+                    label: 'Predicción',
+                  },
+                ],
+                legend: ['Ventas', 'Predicción'],
+              }}
+              width={chartWidth}
+              height={220}
+              chartConfig={{
+                backgroundColor: '#1A2238',
+                backgroundGradientFrom: '#1A2238',
+                backgroundGradientTo: '#1A2238',
+                decimalPlaces: 0,
+                color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+                labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+                style: {
+                  borderRadius: 16,
+                },
+                propsForDots: {
+                  r: '3',
+                  strokeWidth: '1',
+                  stroke: '#ffa726',
+                },
+              }}
+              bezier
+              style={styles.chart}
+              onDataPointClick={handleDataPointClick}
+            />
+          </View>
+        </View>
+
+        {/* Gráfico de Distribución de Ventas por Categoría */}
+        <View style={styles.chartContainer}>
+          <Text style={styles.chartTitle}>Distribución de Ventas por Categoría</Text>
+          <View style={styles.chartWrapper}>
+            <PieChart
+              data={categoryData.map((item, index) => ({
+                name: item.name,
+                population: item.value,
+                color: COLORS[index],
+                legendFontColor: '#FFF',
+                legendFontSize: 12,
+              }))}
+              width={chartWidth}
+              height={220}
+              chartConfig={{
+                backgroundColor: '#1A2238',
+                backgroundGradientFrom: '#1A2238',
+                backgroundGradientTo: '#1A2238',
+                color: (opacity = 1) => `rgba(59, 206, 172, ${opacity})`,
+              }}
+              accessor="population"
+              backgroundColor="transparent"
+              paddingLeft="15"
+              absolute
+              // Interactividad en PieChart no está directamente soportada
+            />
+          </View>
+        </View>
+
+        {/* Gráfico de Ventas Mensuales */}
+        <View style={styles.chartContainer}>
+          <Text style={styles.chartTitle}>Ventas Mensuales</Text>
+          <View style={styles.chartWrapper}>
+            <BarChart
+              data={{
+                labels: salesData.map((item) => item.name),
+                datasets: [
+                  {
+                    data: salesData.map((item) => item.ventas),
+                    color: (opacity = 1) => `rgba(59, 206, 172, ${opacity})`,
+                    label: 'Ventas',
+                  },
+                  {
+                    data: salesData.map((item) => item.prediccion),
+                    color: (opacity = 1) => `rgba(255, 128, 66, ${opacity})`,
+                    label: 'Predicción',
+                  },
+                ],
+                legend: ['Ventas', 'Predicción'],
+              }}
+              width={chartWidth}
+              height={220}
+              fromZero
+              chartConfig={{
+                backgroundColor: '#1A2238',
+                backgroundGradientFrom: '#1A2238',
+                backgroundGradientTo: '#1A2238',
+                decimalPlaces: 0,
+                color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+                labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+                barPercentage: 0.5,
+              }}
+              style={styles.chart}
+              onDataPointClick={handleDataPointClick}
+            />
+          </View>
+        </View>
+
+        {/* Predicción de Ventas de Productos */}
+        <View style={styles.chartContainer}>
+          <Text style={styles.chartTitle}>Predicción de Ventas de Productos (ML)</Text>
+          <View style={styles.chartWrapper}>
+            {productPredictions.map((item, index) => (
+              <View key={index} style={styles.productRow}>
+                <Text style={styles.productName}>{item.name}</Text>
+                <View style={styles.progressBarBackground}>
+                  <View
+                    style={[
+                      styles.progressBarFill,
+                      {
+                        width: `${item.probabilidad * 100}%`,
+                        backgroundColor: COLORS[index % COLORS.length],
+                      },
+                    ]}
+                  />
+                </View>
+                <Text style={styles.productProbability}>
+                  {(item.probabilidad * 100).toFixed(0)}%
+                </Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-    backgroundColor: '#2D3748',
+    backgroundColor: '#1A2238',
   },
-  contentContainer: {
-    padding: 10,
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
->>>>>>> origin/E.-Contreras
+  container: {
+    backgroundColor: '#1A2238',
+    paddingHorizontal: 10, // Aumentado de 15 a 20
     paddingBottom: 20,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 15,
-    backgroundColor: '#34495E', // Light background for the header
-    borderRadius: 10,
-    marginBottom: 20,
-    marginHorizontal: 5,
-  },
-  backButton: {
-    position: 'absolute',
-    left: 15,
-<<<<<<< HEAD
-=======
-=======
-    paddingBottom: 20, // Agregamos padding inferior para evitar que la tabla esté pegada al borde
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
->>>>>>> origin/E.-Contreras
->>>>>>> origin/E.-Contreras
+    backgroundColor: '#2D3A59',
+    padding: 15,
+    marginVertical: 10,
+    borderRadius: 10,
   },
+  backButton: {},
   title: {
     fontSize: 24,
+    color: 'white',
     fontWeight: 'bold',
+    flexShrink: 1,
+  },
+  headerIcons: {
+    flexDirection: 'row',
+  },
+  icon: {
+    marginLeft: 10,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#2D3A59',
+    borderRadius: 8,
+    alignItems: 'center',
+    marginBottom: "10%",
+    paddingHorizontal: "5%",
+    height: "3%",
+  },
+  searchIcon: {
+    marginRight: "2%",
+  },
+  searchInput: {
+    flex: 1,
     color: 'white',
-  },
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
->>>>>>> origin/E.-Contreras
-  pickerWrapperContainer: {
-    marginBottom: 20,
-  },
-  pickerWrapper: {
-    backgroundColor: '#4A5568',
-    borderRadius: 52,
-    overflow: 'hidden', // ensures picker is contained
-  },
-  picker: {
-    height: 40,
-    width: '100%',
-    color: 'white',
-  },
-  pickerItem: {
-    color: 'black',
-<<<<<<< HEAD
-=======
-=======
-  pickerWrapper: {
-    backgroundColor: '#4A5568',
-    borderRadius: 5,
-    overflow: 'hidden', // para asegurar que el picker esté contenido dentro del borde redondeado
-  },
-  picker: {
-    height: 40,
-    width: 160,
-    color: 'white',
-  },
-  pickerItem: {
-    color: 'white',
->>>>>>> origin/E.-Contreras
->>>>>>> origin/E.-Contreras
-    fontSize: 14,
   },
   cardContainer: {
     flexDirection: 'row',
@@ -333,90 +328,136 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   card: {
-    flex: 1,
-    backgroundColor: '#4A5568',
+    backgroundColor: '#2D3A59',
     borderRadius: 8,
     padding: 15,
+    flex: 1,
     marginHorizontal: 5,
   },
-  salesCard: {
-    backgroundColor: '#9F7AEA',
-  },
-  inventoryCard: {
-    backgroundColor: '#48BB78',
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   cardTitle: {
     fontSize: 14,
     color: 'white',
-    marginBottom: 5,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexShrink: 1,
   },
-  cardContent: {
+  cardValue: {
     fontSize: 24,
     color: 'white',
     fontWeight: 'bold',
+    marginVertical: 5,
+    flexShrink: 1,
   },
-  cardSubContent: {
+  cardSubtitle: {
     fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: '#3BCEAC',
+    flexShrink: 1,
   },
   chartContainer: {
-    backgroundColor: '#4A5568',
+    backgroundColor: '#2D3A59',
     borderRadius: 8,
-    padding: 15,
+    padding: 20, // Aumentado para más espacio interno
     marginBottom: 20,
-  },
-  chartHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
+    width: '100%',
   },
   chartTitle: {
-    fontSize: 16,
+    fontSize: 18,
     color: 'white',
-    flexDirection: 'row',
-    alignItems: 'center',
+    marginBottom: 10,
+    fontWeight: 'bold',
+    flexShrink: 1,
+  },
+  chartWrapper: {
+    padding: 10, // Añade padding alrededor del gráfico
   },
   chart: {
+    alignSelf: 'center',
     borderRadius: 16,
-  },
-  modalContainer: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  closeButton: {
-    position: 'absolute',
-    top: 40,
-    right: 20,
-    zIndex: 1,
-  },
-  modalContent: {
-    padding: 20,
   },
   productRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
-    paddingVertical: 10,
-  },
-  productInfo: {
-    flex: 1,
+    alignItems: 'center',
+    marginBottom: 10,
+    flexWrap: 'wrap',
   },
   productName: {
-    fontSize: 14,
+    flex: 1,
+    color: 'white',
+    flexShrink: 1,
+  },
+  progressBarBackground: {
+    flex: 2,
+    height: 10,
+    backgroundColor: '#D1D1D1',
+    borderRadius: 5,
+    marginHorizontal: 10,
+  },
+  progressBarFill: {
+    height: 10,
+    borderRadius: 5,
+  },
+  productProbability: {
+    minWidth: 50,
+    color: 'white',
+    textAlign: 'right',
+  },
+ filterContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  filterLabel: {
+    color: 'white',
+    marginRight: 10,
+  },
+  datePickerButton: {
+    backgroundColor: '#2D3A59',
+    padding: 10,
+    borderRadius: 8,
+    marginRight: 20,
+  },
+  datePickerText: {
     color: 'white',
   },
-  productUnits: {
-    fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.7)',
+  actionButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
   },
-  productRevenue: {
-    fontSize: 14,
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 22,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContent: {
+    backgroundColor: '#2D3A59',
+    borderRadius: 8,
+    padding: 20,
+    alignItems: 'center',
+    width: '80%',
+  },
+  modalTitle: {
+    fontSize: 20,
     color: 'white',
+    marginBottom: 15,
+    fontWeight: 'bold',
+  },
+  modalText: {
+    color: 'white',
+    marginBottom: 10,
+  },
+  modalButton: {
+    backgroundColor: '#3BCEAC',
+    padding: 10,
+    borderRadius: 8,
+    marginTop: 15,
+  },
+  modalButtonText: {
+    color: '#1A2238',
+    fontWeight: 'bold',
   },
 });
