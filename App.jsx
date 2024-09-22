@@ -11,7 +11,7 @@ import BarcodeScannerPage from './screens/scan';
 import UserManagement from './screens/GestionUsuarios';
 import AddUser from './screens/addUsuario';
 import InventoryScreen from './screens/GestionInventario';
-
+import EditProduct from './screens/EditProduct';
 
 
 const Stack = createStackNavigator();
@@ -29,6 +29,7 @@ export default function App() {
         <Stack.Screen name="UserManagement" component={UserManagement} />
         <Stack.Screen name="AddUser" component={AddUser} />
         <Stack.Screen name="InventoryScreen" component={InventoryScreen} />
+        <Stack.Screen name="EditProduct" component={EditProduct} />
       </Stack.Navigator>
     </NavigationContainer>
   );

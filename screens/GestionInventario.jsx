@@ -1,17 +1,55 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import { useNavigation } from '@react-navigation/native';
 
 const products = [
-  { id: 1, name: 'Iphone 12', barcode: '1234567890123', price: '$900', stock: 50 },
-  { id: 2, name: 'MacBook Pro', barcode: '2345678901234', price: '$2500', stock: 20 },
-  { id: 3, name: 'Samsung TV', barcode: '3456789012345', price: '$1500', stock: 15 },
+  {
+    id: 1,
+    name: 'Leche',
+    categoria: 'Lácteos',
+    precio: '2500',
+    stock: '50',
+    descuento: '10',
+    fechaCompra: '2024-09-15',
+    fechaVencimiento: '2025-09-15',
+    barcode: '1234567890123',
+    description: 'Leche.',
+  },
+  {
+    id: 2,
+    name: 'Carne de Res',
+    categoria: 'Carnes',
+    precio: '5500',
+    stock: '20',
+    descuento: '5',
+    fechaCompra: '2024-08-10',
+    fechaVencimiento: '2024-12-10',
+    barcode: '1234567890456',
+    description: 'Carne.',
+  },
+  {
+    id: 3,
+    name: 'Coca-Cola',
+    categoria: 'Bebidas',
+    precio: '2000',
+    stock: '100',
+    descuento: '0',
+    fechaCompra: '2024-09-15',
+    fechaVencimiento: '2025-09-15',
+    barcode: '7806500172116',
+    description: 'Bebida gaseosa.',
+  },
 ];
 
-export default function InventoryScreen() {
+export default function InventoryScreen({route}) {
   const [searchTerm, setSearchTerm] = useState('');
   const navigation = useNavigation();
+  useEffect(() => {
+    if (route.params?.searchBarcode) {
+      setSearchTerm(route.params.searchBarcode);
+    }
+  }, [route.params?.searchBarcode]);
 
   const filteredProducts = products.filter(product =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -27,7 +65,6 @@ export default function InventoryScreen() {
         <Text style={styles.header}>Inventario</Text>
       </View>
 
-      {/* Search Field */}
       <View style={styles.searchContainer}>
         <View style={styles.inputContainer}>
           <Icon name="search" size={20} color="#888" style={styles.searchIcon} />
@@ -47,13 +84,19 @@ export default function InventoryScreen() {
             <View style={styles.productInfo}>
               <Text style={styles.productName}>{product.name}</Text>
               <Text style={styles.productDetails}>Código: {product.barcode}</Text>
-              <Text style={styles.productDetails}>Precio: {product.price}</Text>
+              <Text style={styles.productDetails}>precio: {product.precio}</Text>
               <Text style={styles.productDetails}>Stock: {product.stock}</Text>
+              <Text style={styles.productDetails}>Descuento: {product.descuento}%</Text>
+              <Text style={styles.productDetails}>Categoría: {product.categoria}</Text>
+              <Text style={styles.productDetails}>Fecha de compra: {product.fechaCompra}</Text>
+              <Text style={styles.productDetails}>Fecha de vencimiento: {product.fechaVencimiento}</Text>
+              <Text style={styles.productDetails}>Descripción: {product.description}</Text>
+
             </View>
 
             <TouchableOpacity
               style={styles.editButton}
-              
+              onPress={() => navigation.navigate('EditProduct', { product: product })}
             >
               <Icon name="edit" size={20} color="black" />
               <Text style={styles.editButtonText}>Editar</Text>

@@ -2,9 +2,18 @@ import React, { useState, useEffect } from "react";
 import { Text, View, StyleSheet, TouchableOpacity, Animated, Modal } from "react-native";
 import { CameraView, Camera } from "expo-camera";
 import Icon from 'react-native-vector-icons/Ionicons';
+import { useFocusEffect } from "@react-navigation/native";
 import { LinearGradient } from 'expo-linear-gradient';
 
 export default function BarcodeScannerPage({ navigation }) {
+  useFocusEffect(
+    React.useCallback(() => {
+      setScanned(false); 
+      setIsReadyToScan(true); // Reset scan status on focus
+    }, [])
+  );
+
+  const [isReadyToScan, setIsReadyToScan] = useState(true);
   const [hasPermission, setHasPermission] = useState(null);
   const [scanned, setScanned] = useState(false);
   const [barcodeData, setBarcodeData] = useState('');
@@ -25,8 +34,8 @@ export default function BarcodeScannerPage({ navigation }) {
   const handleBarcodeScanned = ({ type, data }) => {
     setScanned(true);
     setBarcodeData(data);
-    // Show the modal instead of an alert
     setModalVisible(true);
+    setIsReadyToScan(false); // Disable scanning after successful scan
     Animated.timing(buttonOpacity, {
       toValue: 1,
       duration: 500,
@@ -38,11 +47,17 @@ export default function BarcodeScannerPage({ navigation }) {
     setModalVisible(false);
     setScanned(false); // Allow the scanner to be used again
     setBarcodeData(''); // Clear the scanned data
+    setIsReadyToScan(true); // Re-enable scanning
   };
 
   const goToAddProduct = () => {
     setModalVisible(false);
     navigation.navigate('AddProduct', { scannedBarcode: barcodeData }); // Navigate to AddProduct and pass barcode data
+  };
+
+  const goToInventory = () => {
+    setModalVisible(false);
+    navigation.navigate('InventoryScreen', { searchBarcode: barcodeData }); // Navigate to InventoryScreen and pass barcode data
   };
 
   if (hasPermission === null) {
@@ -54,7 +69,6 @@ export default function BarcodeScannerPage({ navigation }) {
 
   return (
     <View style={styles.container}>
-      {/* Modal for successful scan */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -67,11 +81,20 @@ export default function BarcodeScannerPage({ navigation }) {
             <Text style={styles.modalTitle}>¡Producto Escaneado!</Text>
             <Text style={styles.modalMessage}>Código escaneado: {barcodeData}</Text>
             <View style={styles.modalButtonContainer}>
-              <TouchableOpacity onPress={goToAddProduct} style={styles.addMoreButton}>
-                <Text style={styles.addMoreButtonText}>Agregar Producto</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => navigation.goBack()} style={styles.finishButton}>
-                <Text style={styles.finishButtonText}>Terminar</Text>
+              <View style={styles.firstButtonRow}>
+                <View style={styles.buttonWrapper}>
+                  <TouchableOpacity onPress={goToAddProduct} style={[styles.button, styles.addMoreButton]}>
+                    <Text style={styles.addMoreButtonText}>Agregar Producto</Text>
+                  </TouchableOpacity>
+                </View>
+                <View style={styles.buttonWrapper}>
+                  <TouchableOpacity onPress={goToInventory} style={[styles.button, styles.searchButton]}>
+                    <Text style={styles.searchButtonText}>Buscar Producto</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+              <TouchableOpacity onPress={closeModal} style={styles.scanAgainButton}>
+                <Text style={styles.scanAgainButtonText}>Escanear de Nuevo</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -90,10 +113,21 @@ export default function BarcodeScannerPage({ navigation }) {
       <CameraView
         onBarcodeScanned={scanned ? undefined : handleBarcodeScanned}
         barcodeScannerSettings={{
-          barcodeTypes: ["qr", "ean13"], // You can adjust types as needed
+          barcodeTypes: [ "ean13"],
         }}
         style={styles.camera}
       />
+
+      <View style={styles.scanStatusContainer}>
+        {isReadyToScan ? (
+          <Icon name="barcode" size={40} color="green" />
+        ) : (
+          <Icon name="close-circle" size={40} color="red" />
+        )}
+        <Text style={styles.scanStatusText}>
+          {isReadyToScan ? 'Escanee el producto' : 'No se puede escanear en este momento'}
+        </Text>
+      </View>
     </View>
   );
 }
@@ -139,6 +173,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 20,
     alignItems: 'center',
+    width: '90%',
+    maxWidth: 400,
   },
   modalTitle: {
     fontSize: 22,
@@ -152,29 +188,66 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   modalButtonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: 'column',
+    justifyContent: 'center',
     width: '100%',
   },
-  addMoreButton: {
-    backgroundColor: '#f1c40f',
+  firstButtonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  buttonWrapper: {
+    flex: 1,
+  },
+  button: {
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 5,
-    marginRight: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addMoreButton: {
+    backgroundColor: '#f1c40f',
+    paddingVertical: 15,
+    marginRight: 5,
   },
   addMoreButtonText: {
     color: 'white',
     fontWeight: 'bold',
   },
-  finishButton: {
-    backgroundColor: '#4caf50',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 5,
+  searchButton: {
+    backgroundColor: '#1abc9c',
+    paddingVertical: 15,
+    marginLeft: 5,
   },
-  finishButtonText: {
+  searchButtonText: {
     color: 'white',
     fontWeight: 'bold',
+  },
+  scanAgainButton: {
+    backgroundColor: '#e67e22',
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 5,
+    alignSelf: 'center',
+    width: '100%', // Full width for the scan again button
+  },
+  scanAgainButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    textAlign: 'center', // Center text inside button
+  },
+  // Scan status indicator styles
+  scanStatusContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 15,
+  },
+  scanStatusText: {
+    marginLeft: 10,
+    color: 'white',
+    fontSize: 16,
   },
 });
