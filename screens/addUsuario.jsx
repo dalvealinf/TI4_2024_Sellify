@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Modal } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Switch } from 'react-native-paper';  // Usamos react-native-paper para el Switch
 
 export default function AddUserScreen({ navigation }) {
@@ -28,7 +27,7 @@ export default function AddUserScreen({ navigation }) {
   };
 
   return (
-    <LinearGradient colors={['#3b4cca', '#522e92']} style={styles.container}>
+    <View style={styles.container}>
       {/* Modal de confirmación */}
       <Modal
         animationType="slide"
@@ -48,14 +47,15 @@ export default function AddUserScreen({ navigation }) {
         </View>
       </Modal>
 
-      {/* Flecha de retroceso */}
-      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-        <Icon name="arrow-left" size={24} color="white" />
-        <Text style={styles.backButtonText}>Volver</Text>
-      </TouchableOpacity>
-
-      {/* Título */}
-      <Text style={styles.title}>Gestionador de Usuarios</Text>
+      <View style={styles.header}>
+        {/* Flecha de retroceso */}
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Icon name="arrow-left" size={20} color="white" />
+        </TouchableOpacity>
+        
+        {/* Título */}
+        <Text style={styles.backButtonText}>Gestión de Usuarios</Text>
+      </View>
 
       {/* Inputs de Nombre, Email y Contraseña */}
       <View style={styles.inputContainer}>
@@ -115,23 +115,18 @@ export default function AddUserScreen({ navigation }) {
         <Switch
           value={isActive}
           onValueChange={() => setIsActive(!isActive)}
-          color="#ff416c"
+          color="#FF6B6B"
         />
       </View>
 
       {/* Botón de Crear Usuario */}
       <TouchableOpacity onPress={handleAddUser} style={styles.addButton}>
-        <LinearGradient
-          colors={['#ff416c', '#ff4b2b']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.addButtonBackground}
-        >
+        <View style={styles.addButtonBackground}>
           <Icon name="user-plus" size={20} color="white" />
           <Text style={styles.addButtonText}>Crear Usuario</Text>
-        </LinearGradient>
+        </View>
       </TouchableOpacity>
-    </LinearGradient>
+    </View>
   );
 }
 
@@ -140,19 +135,24 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     justifyContent: 'center',
+    backgroundColor: '#1A2238',
   },
-  backButton: {
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
-    position: 'absolute', 
-    top: "8%", 
-    left: "5%",
+    backgroundColor: '#2D3A59',
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 10,
+    marginBottom: 20,
+  },
+  backButton: {
+    paddingRight: 10,
   },
   backButtonText: {
     color: 'white',
-    fontSize: 16,
-    marginLeft: 10,
+    fontSize: 18,
+    fontWeight: 'bold',
   },
   title: {
     fontSize: 32,
@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: '#2D3A59',
     borderRadius: 10,
     paddingLeft: 15,
     shadowColor: '#000',
@@ -206,8 +206,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   activeRoleButton: {
-    backgroundColor: '#ff416c',
-    borderColor: '#ff416c',
+    backgroundColor: '#FF6B6B',
+    borderColor: '#FF6B6B',
   },
   roleText: {
     color: '#fff',
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: '#2D3A59',
     borderRadius: 10,
     padding: 15,
     marginBottom: 20,
@@ -239,6 +239,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 15,
     borderRadius: 30,
+    backgroundColor: '#FF6B6B',
   },
   addButtonText: {
     color: 'white',

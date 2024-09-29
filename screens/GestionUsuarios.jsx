@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Animated, View, Text, TextInput, Image, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
-import { useNavigation } from '@react-navigation/native'; // Importar el hook de navegación
+import { useNavigation } from '@react-navigation/native';
 
 const users = [
   { id: 1, name: 'Alice Johnson', email: 'alice@example.com', role: 'Admin', avatar: require('../assets/avatar.jpg') },
@@ -16,7 +16,7 @@ export default function UserManagement() {
   const [expandedUser, setExpandedUser] = useState(null);
   const [menuVisible, setMenuVisible] = useState(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const navigation = useNavigation(); // Hook de navegación
+  const navigation = useNavigation();
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -34,7 +34,7 @@ export default function UserManagement() {
   return (
     <View style={styles.container}>
       <View style={styles.headerContainer}>
-        <TouchableOpacity style={styles.backButton}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="white" />
         </TouchableOpacity>
         <Animated.View style={{ opacity: fadeAnim }}>
@@ -42,24 +42,25 @@ export default function UserManagement() {
         </Animated.View>
       </View>
 
+      {/* Cuadro de búsqueda */}
       <View style={styles.searchContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Buscar usuarios..."
-          placeholderTextColor="#888"
-          value={searchTerm}
-          onChangeText={(text) => setSearchTerm(text)}
-        />
-        <TouchableOpacity style={styles.searchButton}>
-          <Icon name="search" size={20} color="white" />
-        </TouchableOpacity>
+        <View style={styles.inputContainer}>
+          <Icon name="search" size={20} color="#888" style={styles.searchIcon} />
+          <TextInput
+            style={styles.input}
+            placeholder="Buscar usuarios..."
+            placeholderTextColor="#888"
+            value={searchTerm}
+            onChangeText={(text) => setSearchTerm(text)}
+          />
+        </View>
 
         {/* Redirección al añadir usuario */}
         <TouchableOpacity 
           style={styles.addButton}
-          onPress={() => navigation.navigate('AddUser')} // Redirige a la pantalla "AddUser"
+          onPress={() => navigation.navigate('AddUser')}
         >
-          <Icon name="user-plus" size={20} color="white" />
+          <Icon name="user-plus" size={20} />
           <Text style={styles.addButtonText}>Añadir</Text>
         </TouchableOpacity>
       </View>
@@ -123,44 +124,54 @@ export default function UserManagement() {
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    backgroundColor: '#2c2c2c',
+    backgroundColor: '#1A2238',
   },
   headerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    paddingVertical: 15,
+    backgroundColor: '#2D3A59',
+    borderRadius: 10,
+    marginBottom: 20,
+    marginHorizontal: 5,
   },
   backButton: {
-    marginRight: 8,
+    marginLeft: 8,
   },
   header: {
     fontSize: 24,
     fontWeight: 'bold',
     color: 'white',
+    marginLeft: 8,
   },
   searchContainer: {
     flexDirection: 'row',
     marginBottom: 16,
+    alignItems: 'center',
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#2D3A59',
+    borderRadius: 8,
+    flex: 1,
+    paddingHorizontal: 10,
+  },
+  searchIcon: {
+    marginRight: 8,
   },
   input: {
     flex: 1,
-    backgroundColor: '#444',
-    paddingHorizontal: 12,
-    borderRadius: 8,
     color: 'white',
-    marginRight: 8,
-  },
-  searchButton: {
-    backgroundColor: '#555',
-    padding: 10,
-    borderRadius: 8,
+    paddingVertical: 10,
   },
   addButton: {
-    backgroundColor: '#28a745',
+    backgroundColor: '#3BCEAC',
     padding: 10,
     flexDirection: 'row',
     alignItems: 'center',
@@ -168,11 +179,11 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   addButtonText: {
-    color: 'white',
+    color: '#1A2238',
     marginLeft: 8,
   },
   userCard: {
-    backgroundColor: '#3d3d3d',
+    backgroundColor: '#2D3A59',
     padding: 16,
     borderRadius: 8,
     marginBottom: 12,
@@ -212,19 +223,19 @@ const styles = StyleSheet.create({
     marginRight: 'auto',
   },
   moreButton: {
-    backgroundColor: '#555',
+    backgroundColor: '#1A73E8',
     padding: 8,
     borderRadius: 8,
   },
   expandButton: {
-    backgroundColor: '#555',
+    backgroundColor: '#1A73E8',
     padding: 8,
     borderRadius: 8,
     marginLeft: 8,
   },
   additionalInfo: {
     marginTop: 12,
-    backgroundColor: '#444',
+    backgroundColor: '#1E2A38',
     padding: 12,
     borderRadius: 8,
   },

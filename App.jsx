@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
->>>>>>> origin/E.-Contreras
 import { NavigationContainer, DarkTheme } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Provider as PaperProvider } from 'react-native-paper';
@@ -14,6 +10,10 @@ import DetalleVenta from './screens/detalleVenta';
 import BarcodeScannerPage from './screens/scan';
 import UserManagement from './screens/GestionUsuarios';
 import AddUser from './screens/addUsuario';
+import InventoryScreen from './screens/GestionInventario';
+import EditProduct from './screens/EditProduct';
+
+
 const Stack = createStackNavigator();
 export default function App() {
   return (
@@ -28,35 +28,9 @@ export default function App() {
         <Stack.Screen name="BarcodeScannerPage" component={BarcodeScannerPage} />
         <Stack.Screen name="UserManagement" component={UserManagement} />
         <Stack.Screen name="AddUser" component={AddUser} />
-      </Stack.Navigator>
-    </NavigationContainer>
-  );
-<<<<<<< HEAD
-}
-=======
-}
-=======
-import * as React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { StatusBar } from 'expo-status-bar';
-import { enableScreens } from 'react-native-screens'; // Importar esta función
-import MainScreen from './screens/LoginScreen';
-import DashBoard from './screens/DashBoard';
-
-enableScreens(); // Habilitar react-native-screens para mejorar el rendimiento
-
-const Stack = createNativeStackNavigator();
-
-export default function App() {
-  return (
-    <NavigationContainer>
-      <Stack.Navigator initialRouteName="Login">
-        <Stack.Screen name="Login" component={MainScreen} />
-        <Stack.Screen name="Dashboard" component={DashBoard} />
+        <Stack.Screen name="InventoryScreen" component={InventoryScreen} />
+        <Stack.Screen name="EditProduct" component={EditProduct} />
       </Stack.Navigator>
     </NavigationContainer>
   );
 }
->>>>>>> origin/E.-Contreras
->>>>>>> origin/E.-Contreras

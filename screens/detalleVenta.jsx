@@ -16,7 +16,6 @@ export default function DetalleVenta({ route }) {
 
   return (
     <View style={styles.container}>
-      {/* Header with Back Button and Title */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Icon name="arrow-back" size={24} color="#fff" />
@@ -40,22 +39,22 @@ export default function DetalleVenta({ route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#2C3E50',
+    backgroundColor: '#1A2238',
     padding: 20,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center', // Centers the title
+    justifyContent: 'center',
     paddingVertical: 15,
-    backgroundColor: '#34495E', // Light background
+    backgroundColor: '#2D3A59',
     borderRadius: 10,
     marginBottom: 20,
     marginHorizontal: 5,
   },
   backButton: {
     position: 'absolute',
-    left: 15, // Move the back arrow to the left
+    left: 15,
   },
   titulo: {
     fontSize: 22,
@@ -74,7 +73,7 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   productoContainer: {
-    backgroundColor: '#34495E',
+    backgroundColor: '#2D3A59',
     padding: 10,
     borderRadius: 10,
     marginBottom: 10,
