@@ -17,8 +17,7 @@ import Swiper from 'react-native-swiper';
 export default function PaginaPrincipal({ navigation }) {
   const funcionalidades = [
     { nombre: 'Escanear Productos', icono: 'barcode-scan', screen: 'BarcodeScannerPage' },
-    { nombre: 'Revisar Inventario', icono: 'archive-outline' },
-    { nombre: 'Editar Inventario', icono: 'pencil-outline' },
+    { nombre: 'Revisar Inventario', icono: 'archive-outline', screen: 'InventoryScreen' },
     { nombre: 'Historial de Ventas', icono: 'book-outline', screen: 'HistorialVentas' },
     { nombre: 'Agregar Productos', icono: 'plus-box-outline', screen: 'AddProduct' },
     { nombre: 'Gestionar Usuarios', icono: 'account-multiple-plus-outline', screen: 'UserManagement' },
