@@ -12,25 +12,30 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 export default function EditProduct({ route, navigation }) {
-  const { product } = route.params; // Receive the product data through navigation
+  const { product } = route.params;
+  console.log('Editing product:', product);
 
-  // State with the product data
-  const [nombre, setNombre] = useState(product.name || '');
-  const [categoria, setCategoria] = useState(product.categoria || 'Lacteos');
-  const [precio, setPrecio] = useState(product.precio || '');
-  const [stock, setStock] = useState(product.stock || '');
-  const [descuento, setDescuento] = useState(product.descuento || '');
-  const [fechaCompra, setFechaCompra] = useState(new Date(product.fechaCompra));
-  const [fechaVencimiento, setFechaVencimiento] = useState(new Date(product.fechaVencimiento));
-  const [barcode, setBarcode] = useState(product.barcode || '');
-  const [description, setDescription] = useState(product.description || '');
+  // Helper function to validate dates
+  const validateDate = (dateString) => {
+    const date = new Date(dateString);
+    return !isNaN(date.getTime()) ? date : new Date(); // Use current date if invalid
+  };
 
-  // Dropdown control states
+  const [nombre, setNombre] = useState((product.nombre) || '');
+  const [categoria, setCategoria] = useState((product.categoria) || 'Lacteos');
+  const [precio, setPrecio] = useState((product.precio_venta) || '');
+  const [stock, setStock] = useState(product.stock ? String(product.stock) : '');
+
+  const [descuento, setDescuento] = useState((product.descuento) || '');
+  const [fechaCompra, setFechaCompra] = useState(validateDate(product.fecha_registro));
+  const [fechaVencimiento, setFechaVencimiento] = useState(validateDate(product.fecha_vencimiento));
+  const [barcode, setBarcode] = useState((product.codigo_barras) || '');
+  const [description, setDescription] = useState((product.descripcion) || '');
+
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const [showFechaCompraPicker, setShowFechaCompraPicker] = useState(false);
   const [showFechaVencimientoPicker, setShowFechaVencimientoPicker] = useState(false);
 
-  // Modal states
   const [modalVisible, setModalVisible] = useState(false);
   const [addAgainModalVisible, setAddAgainModalVisible] = useState(false);
 
@@ -66,7 +71,6 @@ export default function EditProduct({ route, navigation }) {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      {/* Modal for editing */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -84,7 +88,6 @@ export default function EditProduct({ route, navigation }) {
         </View>
       </Modal>
 
-      {/* Modal for adding again */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -222,7 +225,6 @@ export default function EditProduct({ route, navigation }) {
         keyboardType="numeric"
       />
 
-      {/* Buttons for editing and adding again */}
       <TouchableOpacity style={styles.solidButton} onPress={handleEditProduct}>
         <Text style={styles.solidButtonText}>Guardar Cambios</Text>
       </TouchableOpacity>

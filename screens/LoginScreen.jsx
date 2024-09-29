@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, TextInput, TouchableOpacity, Dimensions, Animat
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage'; // Importación de AsyncStorage
 
 // Obtener correctamente las dimensiones de la pantalla
 const { width, height } = Dimensions.get('window');
@@ -13,6 +14,7 @@ export default function Login() {
   const [username, setUsername] = useState(''); // Estado para el nombre de usuario
   const [password, setPassword] = useState(''); // Estado para la contraseña
   const [error, setError] = useState(null); // Estado para manejar errores
+  const [rememberMe, setRememberMe] = useState(false); // Estado para "Recuérdame"
   const navigation = useNavigation(); // Hook para acceder a la navegación
 
   // Animaciones
@@ -24,6 +26,23 @@ export default function Login() {
   const [buttonPosition] = useState(new Animated.Value(height)); // Deslizamiento desde abajo
 
   useEffect(() => {
+    // Función para cargar credenciales guardadas
+    const loadCredentials = async () => {
+      try {
+        const savedCredentials = await AsyncStorage.getItem('credentials');
+        if (savedCredentials) {
+          const { username, password } = JSON.parse(savedCredentials);
+          setUsername(username);
+          setPassword(password);
+          setRememberMe(true);
+        }
+      } catch (error) {
+        console.error('Error al cargar las credenciales', error);
+      }
+    };
+
+    loadCredentials();
+
     // Animación de entrada del Card
     Animated.parallel([
       Animated.timing(cardPosition, {
@@ -72,16 +91,27 @@ export default function Login() {
 
   const togglePasswordVisibility = () => setShowPassword(!showPassword);
 
-  const handleLoginPress = () => {
+  const handleLoginPress = async () => {
     // Validar los datos de entrada
-    if (username === 'admin' && password === '12345') {
+    if (username.toLowerCase() === 'admin' && password === '12345') {
       setLoading(true);
       setError(null);
+      try {
+        if (rememberMe) {
+          // Guardar credenciales
+          await AsyncStorage.setItem('credentials', JSON.stringify({ username, password }));
+        } else {
+          // Eliminar credenciales guardadas
+          await AsyncStorage.removeItem('credentials');
+        }
+      } catch (error) {
+        console.error('Error al guardar las credenciales', error);
+      }
       setTimeout(() => {
         setLoading(false);
         navigation.navigate('Home'); // Asegúrate de que el nombre coincida exactamente con el nombre de la pantalla en el stack
       }, 2000); // Simulación de 2 segundos
-    }else {
+    } else {
       setError('Usuario o contraseña incorrectos');
     }
   };
@@ -170,6 +200,16 @@ export default function Login() {
                 color="#888"
               />
             </TouchableOpacity>
+          </View>
+        </Animated.View>
+
+        {/* Checkbox de "Recuérdame" */}
+        <Animated.View style={{ transform: [{ translateX: inputPosition }] }}>
+          <View style={styles.rememberMeContainer}>
+            <TouchableOpacity onPress={() => setRememberMe(!rememberMe)} style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>
+              {rememberMe && <Ionicons name="checkmark" size={20} color="#fff" />}
+            </TouchableOpacity>
+            <Text style={styles.rememberMeText}>Recuérdame</Text>
           </View>
         </Animated.View>
 
@@ -270,6 +310,28 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 10,
     top: 10,
+  },
+  rememberMeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+    backgroundColor: '#f9f9f9',
+  },
+  checkboxChecked: {
+    backgroundColor: '#5A67D8',
+    borderColor: '#5A67D8',
+  },
+  rememberMeText: {
+    fontSize: 16,
   },
   loginButton: {
     marginTop: 20,
