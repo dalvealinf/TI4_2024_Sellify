@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native'; // Import useFocusEffect
 
 export default function InventoryScreen({ route }) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -10,17 +10,23 @@ export default function InventoryScreen({ route }) {
   const [loading, setLoading] = useState(true); // Added loading state
   const navigation = useNavigation();
 
+  // Set search term if coming from searchBarcode
   useEffect(() => {
     if (route.params?.searchBarcode) {
       setSearchTerm(route.params.searchBarcode);
     }
   }, [route.params?.searchBarcode]);
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
+  // Fetch products on screen focus (when returning from edit page)
+  useFocusEffect(
+    useCallback(() => {
+      fetchProducts(); // Fetch products whenever screen is focused
+    }, [])
+  );
 
+  // Function to fetch products from the API
   const fetchProducts = async () => {
+    setLoading(true); // Start loading
     try {
       const response = await fetch('http://170.239.85.88:5000/products');
       const data = await response.json();
