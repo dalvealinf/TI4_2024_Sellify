@@ -4,17 +4,46 @@ import Icon from 'react-native-vector-icons/Feather';
 import { Switch } from 'react-native-paper';  // Usamos react-native-paper para el Switch
 
 export default function AddUserScreen({ navigation }) {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [role, setRole] = useState('user');  // Estado para el rol
+  const [rut, setRut] = useState(''); // Estado para el RUT
+  const [name, setName] = useState(''); // Estado para el nombre
+  const [lastname, setLastname] = useState(''); // Estado para el apellido
+  const [email, setEmail] = useState(''); // Estado para el correo
+  const [password, setPassword] = useState(''); // Estado para la contraseña
+  const [phone, setPhone] = useState(''); // Estado para el teléfono
+  const [role, setRole] = useState('Vendedor');  // Estado para el tipo_usuario
   const [isActive, setIsActive] = useState(true);  // Estado para el Switch de "Usuario Activo"
   const [modalVisible, setModalVisible] = useState(false); // Estado para el modal de confirmación
 
   const handleAddUser = () => {
     // Verificar si todos los campos están completos antes de mostrar el modal
-    if (name && email && password) {
-      setModalVisible(true);
+    if (rut && name && lastname && email && password && phone && role) {
+      // Enviar los datos a la API
+      fetch('http://170.239.85.88:5000/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          rut,
+          nombre: name,
+          apellido: lastname,
+          correo: email,
+          contrasena: password,
+          telefono: phone,
+          tipo_usuario: role,
+        }),
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.msg === "Usuario registrado exitosamente") {
+            setModalVisible(true);
+          } else {
+            alert('Error al registrar usuario: ' + data.msg);
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+        });
     } else {
       alert('Por favor, rellena todos los campos.');
     }
@@ -48,16 +77,25 @@ export default function AddUserScreen({ navigation }) {
       </Modal>
 
       <View style={styles.header}>
-        {/* Flecha de retroceso */}
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={20} color="white" />
         </TouchableOpacity>
-        
-        {/* Título */}
         <Text style={styles.backButtonText}>Gestión de Usuarios</Text>
       </View>
 
-      {/* Inputs de Nombre, Email y Contraseña */}
+      {/* Input para el RUT */}
+      <View style={styles.inputContainer}>
+        <Icon name="user" size={20} color="#fff" style={styles.inputIcon} />
+        <TextInput
+          style={styles.input}
+          placeholder="RUT"
+          placeholderTextColor="#aaa"
+          value={rut}
+          onChangeText={setRut}
+        />
+      </View>
+
+      {/* Inputs de Nombre, Apellido, Email, Teléfono y Contraseña */}
       <View style={styles.inputContainer}>
         <Icon name="user" size={20} color="#fff" style={styles.inputIcon} />
         <TextInput
@@ -70,6 +108,17 @@ export default function AddUserScreen({ navigation }) {
       </View>
 
       <View style={styles.inputContainer}>
+        <Icon name="user" size={20} color="#fff" style={styles.inputIcon} />
+        <TextInput
+          style={styles.input}
+          placeholder="Apellido"
+          placeholderTextColor="#aaa"
+          value={lastname}
+          onChangeText={setLastname}
+        />
+      </View>
+
+      <View style={styles.inputContainer}>
         <Icon name="mail" size={20} color="#fff" style={styles.inputIcon} />
         <TextInput
           style={styles.input}
@@ -77,6 +126,17 @@ export default function AddUserScreen({ navigation }) {
           placeholderTextColor="#aaa"
           value={email}
           onChangeText={setEmail}
+        />
+      </View>
+
+      <View style={styles.inputContainer}>
+        <Icon name="phone" size={20} color="#fff" style={styles.inputIcon} />
+        <TextInput
+          style={styles.input}
+          placeholder="Teléfono"
+          placeholderTextColor="#aaa"
+          value={phone}
+          onChangeText={setPhone}
         />
       </View>
 
@@ -96,16 +156,16 @@ export default function AddUserScreen({ navigation }) {
       <Text style={styles.roleLabel}>Rol</Text>
       <View style={styles.roleContainer}>
         <TouchableOpacity
-          style={[styles.roleButton, role === 'user' ? styles.activeRoleButton : null]}
-          onPress={() => setRole('user')}
+          style={[styles.roleButton, role === 'Vendedor' ? styles.activeRoleButton : null]}
+          onPress={() => setRole('Vendedor')}
         >
-          <Text style={[styles.roleText, role === 'user' ? styles.activeRoleText : null]}>Vendedor</Text>
+          <Text style={[styles.roleText, role === 'Vendedor' ? styles.activeRoleText : null]}>Vendedor</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.roleButton, role === 'admin' ? styles.activeRoleButton : null]}
-          onPress={() => setRole('admin')}
+          style={[styles.roleButton, role === 'Administrador' ? styles.activeRoleButton : null]}
+          onPress={() => setRole('Administrador')}
         >
-          <Text style={[styles.roleText, role === 'admin' ? styles.activeRoleText : null]}>Administrador</Text>
+          <Text style={[styles.roleText, role === 'Administrador' ? styles.activeRoleText : null]}>Administrador</Text>
         </TouchableOpacity>
       </View>
 
@@ -129,6 +189,7 @@ export default function AddUserScreen({ navigation }) {
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {
