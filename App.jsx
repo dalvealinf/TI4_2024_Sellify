@@ -12,13 +12,14 @@ import UserManagement from './screens/GestionUsuarios';
 import AddUser from './screens/addUsuario';
 import InventoryScreen from './screens/GestionInventario';
 import EditProduct from './screens/EditProduct';
+import ProfileScreen from './screens/Profile';
 
 
 const Stack = createStackNavigator();
 export default function App() {
   return (
     <NavigationContainer theme={DarkTheme}>
-      <Stack.Navigator initialRouteName="Home" screenOptions={{headerShown: false,}}>
+      <Stack.Navigator initialRouteName="Login" screenOptions={{headerShown: false,}}>
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Home" component={PaginaPrincipal} />
         <Stack.Screen name="DashBoard" component={DashBoard} />
@@ -30,6 +31,7 @@ export default function App() {
         <Stack.Screen name="AddUser" component={AddUser} />
         <Stack.Screen name="InventoryScreen" component={InventoryScreen} />
         <Stack.Screen name="EditProduct" component={EditProduct} />
+        <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

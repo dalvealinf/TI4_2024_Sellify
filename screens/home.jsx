@@ -24,6 +24,7 @@ export default function PaginaPrincipal({ navigation }) {
     { nombre: 'Agregar Productos', icono: 'plus-box-outline', screen: 'AddProduct' },
     { nombre: 'Gestionar Usuarios', icono: 'account-multiple-plus-outline', screen: 'UserManagement' },
     { nombre: 'Estadísticas', icono: 'chart-pie', screen: 'DashBoard'  },
+    { nombre: 'Perfil', icono: 'account-circle', screen: 'ProfileScreen' },  // Botón de perfil agregado
   ];
 
   const slideAnim = useRef(new Animated.Value(200)).current;
@@ -134,6 +135,8 @@ export default function PaginaPrincipal({ navigation }) {
         <Icon name="logout" size={24} color="#FFFFFF" />
         <Text style={styles.logoutText}>Cerrar Sesión</Text>
       </TouchableOpacity>
+
+      
     </View>
   );
 }

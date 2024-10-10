@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Modal } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
-import { Switch } from 'react-native-paper';  // Usamos react-native-paper para el Switch
 
 export default function AddUserScreen({ navigation }) {
   const [rut, setRut] = useState(''); // Estado para el RUT
@@ -11,7 +10,6 @@ export default function AddUserScreen({ navigation }) {
   const [password, setPassword] = useState(''); // Estado para la contraseña
   const [phone, setPhone] = useState(''); // Estado para el teléfono
   const [role, setRole] = useState('Vendedor');  // Estado para el tipo_usuario
-  const [isActive, setIsActive] = useState(true);  // Estado para el Switch de "Usuario Activo"
   const [modalVisible, setModalVisible] = useState(false); // Estado para el modal de confirmación
 
   const handleAddUser = () => {
@@ -156,27 +154,17 @@ export default function AddUserScreen({ navigation }) {
       <Text style={styles.roleLabel}>Rol</Text>
       <View style={styles.roleContainer}>
         <TouchableOpacity
-          style={[styles.roleButton, role === 'Vendedor' ? styles.activeRoleButton : null]}
-          onPress={() => setRole('Vendedor')}
+          style={[styles.roleButton, role === 'cajero' ? styles.activeRoleButton : null]}
+          onPress={() => setRole('cajero')}
         >
-          <Text style={[styles.roleText, role === 'Vendedor' ? styles.activeRoleText : null]}>Vendedor</Text>
+          <Text style={[styles.roleText, role === 'cajero' ? styles.activeRoleText : null]}>cajero</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.roleButton, role === 'Administrador' ? styles.activeRoleButton : null]}
-          onPress={() => setRole('Administrador')}
+          style={[styles.roleButton, role === 'admin' ? styles.activeRoleButton : null]}
+          onPress={() => setRole('admin')}
         >
-          <Text style={[styles.roleText, role === 'Administrador' ? styles.activeRoleText : null]}>Administrador</Text>
+          <Text style={[styles.roleText, role === 'admin' ? styles.activeRoleText : null]}>admin</Text>
         </TouchableOpacity>
-      </View>
-
-      {/* Switch de Usuario Activo */}
-      <View style={styles.switchContainer}>
-        <Text style={styles.switchLabel}>Usuario Activo</Text>
-        <Switch
-          value={isActive}
-          onValueChange={() => setIsActive(!isActive)}
-          color="#FF6B6B"
-        />
       </View>
 
       {/* Botón de Crear Usuario */}
