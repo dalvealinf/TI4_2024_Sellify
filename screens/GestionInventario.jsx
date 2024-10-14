@@ -1,57 +1,114 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator, Modal } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
-import { useNavigation, useFocusEffect } from '@react-navigation/native'; // Import useFocusEffect
+import { useNavigation, useFocusEffect } from '@react-navigation/native'; 
 
 export default function InventoryScreen({ route }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [products, setProducts] = useState([]);
   const [expandedProduct, setExpandedProduct] = useState(null);
-  const [loading, setLoading] = useState(true); // Added loading state
+  const [loading, setLoading] = useState(true);
+  const [showInactive, setShowInactive] = useState(false); 
+  const [confirmationModalVisible, setConfirmationModalVisible] = useState(false); // Confirmation modal state
+  const [selectedProduct, setSelectedProduct] = useState(null); // Product to deactivate
+  const [modalVisible, setModalVisible] = useState(false); // State for success/error modal
+  const [modalMessage, setModalMessage] = useState(''); // Message to show in modal
+  const [isSuccess, setIsSuccess] = useState(true); // Differentiate between success and error
   const navigation = useNavigation();
 
-  // Set search term if coming from searchBarcode
+
   useEffect(() => {
     if (route.params?.searchBarcode) {
       setSearchTerm(route.params.searchBarcode);
     }
   }, [route.params?.searchBarcode]);
 
-  // Fetch products on screen focus (when returning from edit page)
+
   useFocusEffect(
     useCallback(() => {
-      fetchProducts(); // Fetch products whenever screen is focused
-    }, [])
+      fetchProducts(); 
+    }, [showInactive]) 
   );
 
-  // Function to fetch products from the API
+
   const fetchProducts = async () => {
-    setLoading(true); // Start loading
+    setLoading(true); 
     try {
       const response = await fetch('http://170.239.85.88:5000/products');
       const data = await response.json();
 
-      const formattedProducts = data.map(product => {
-        const fechaRegistroValida = product.fecha_registro ? new Date(product.fecha_registro) : null;
-        const fechaVencimientoValida = product.fecha_vencimiento ? new Date(product.fecha_vencimiento) : null;
+      const formattedProducts = data
+        .filter(product => product.estado_producto === (showInactive ? 'inactivo' : 'activo')) 
+        .map(product => {
+          const fechaRegistroValida = product.fecha_registro ? new Date(product.fecha_registro) : null;
+          const fechaVencimientoValida = product.fecha_vencimiento ? new Date(product.fecha_vencimiento) : null;
 
-        return {
-          ...product,
-          fecha_registro: fechaRegistroValida && !isNaN(fechaRegistroValida)
-            ? fechaRegistroValida.toISOString().split('T')[0]
-            : 'Fecha inválida',
-          fecha_vencimiento: fechaVencimientoValida && !isNaN(fechaVencimientoValida)
-            ? fechaVencimientoValida.toISOString().split('T')[0]
-            : 'Fecha inválida',
-        };
-      });
+          return {
+            ...product,
+            fecha_registro: fechaRegistroValida && !isNaN(fechaRegistroValida)
+              ? fechaRegistroValida.toISOString().split('T')[0]
+              : 'Fecha inválida',
+            fecha_vencimiento: fechaVencimientoValida && !isNaN(fechaVencimientoValida)
+              ? fechaVencimientoValida.toISOString().split('T')[0]
+              : 'Fecha inválida',
+          };
+        });
 
       setProducts(formattedProducts);
     } catch (error) {
       console.error('Error al obtener productos:', error);
     } finally {
-      setLoading(false); // Stop loading after data is fetched
+      setLoading(false); 
     }
+  };
+
+  const deactivateProduct = async (codigo_barras) => {
+    try {
+      const response = await fetch(`http://170.239.85.88:5000/product/barcode/${codigo_barras}`, {
+        method: 'DELETE',
+      });
+      const result = await response.json();
+
+      if (response.ok) {
+        setModalMessage('Producto marcado como inactivo exitosamente.');
+        setIsSuccess(true);
+      } else {
+        setModalMessage(result.msg || 'Error al desactivar el producto.');
+        setIsSuccess(false);
+      }
+    } catch (error) {
+      console.error('Error al desactivar producto:', error);
+      setModalMessage('No se pudo conectar con el servidor.');
+      setIsSuccess(false);
+    } finally {
+      setModalVisible(true); // Show the modal after the operation
+      fetchProducts(); // Refresh the product list
+    }
+  };
+
+  const confirmDeactivateProduct = (product) => {
+    setSelectedProduct(product); // Set the product to be deactivated
+    setConfirmationModalVisible(true); // Show the confirmation modal
+  };
+
+  const handleConfirmDeactivate = () => {
+    if (selectedProduct) {
+      deactivateProduct(selectedProduct.codigo_barras); // Proceed with deactivating the product
+      setConfirmationModalVisible(false); // Close confirmation modal
+    }
+  };
+
+  const closeModal = () => {
+    setModalVisible(false);
+  };
+
+  const closeConfirmationModal = () => {
+    setConfirmationModalVisible(false);
+  };
+
+
+  const addAgainProduct = (product) => {
+    navigation.navigate('AddProductAgain', { product }); 
   };
 
   const filteredProducts = products.filter(product =>
@@ -65,7 +122,17 @@ export default function InventoryScreen({ route }) {
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="white" />
         </TouchableOpacity>
+
         <Text style={styles.header}>Inventario</Text>
+
+        <TouchableOpacity
+          style={styles.toggleButton}
+          onPress={() => setShowInactive(!showInactive)}
+        >
+          <Text style={styles.toggleButtonText}>
+            {showInactive ? 'Mostrar Activos' : 'Mostrar Inactivos'}
+          </Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.searchContainer}>
@@ -104,6 +171,7 @@ export default function InventoryScreen({ route }) {
                 {expandedProduct === product.id_producto && (
                   <View style={styles.additionalInfo}>
                     <Text style={styles.additionalText}>Código: {product.codigo_barras}</Text>
+                    <Text style={styles.additionalText}>Estado: {product.estado_producto}</Text>
                     <Text style={styles.additionalText}>Stock: {product.stock}</Text>
                     <Text style={styles.additionalText}>Descuento: {product.descuento}%</Text>
                     <Text style={styles.additionalText}>Categoría: {product.categoria}</Text>
@@ -123,9 +191,24 @@ export default function InventoryScreen({ route }) {
                   <Text style={styles.editButtonText}>Editar</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.deleteButton}>
-                  <Icon name="trash-2" size={20} color="black" />
-                  <Text style={styles.deleteButtonText}>Eliminar</Text>
+
+                {!showInactive && (
+                  <TouchableOpacity
+                    style={styles.deleteButton}
+                    onPress={() => confirmDeactivateProduct(product)}
+                  >
+                    <Icon name="trash-2" size={20} color="black" />
+                    <Text style={styles.deleteButtonText}>Desactivar</Text>
+                  </TouchableOpacity>
+                )}
+
+                {/* Add Again Button */}
+                <TouchableOpacity
+                  style={styles.addAgainButton}
+                  onPress={() => addAgainProduct(product)} // Navigate to Add Product page
+                >
+                  <Icon name="plus" size={20} color="black" />
+                  <Text style={styles.addAgainButtonText}>Agregar de Nuevo</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -136,6 +219,49 @@ export default function InventoryScreen({ route }) {
           <Text style={styles.noDataText}>No existe ningún producto actualmente.</Text>
         </View>
       )}
+
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={confirmationModalVisible}
+        onRequestClose={closeConfirmationModal}
+      >
+        <View style={styles.modalBackground}>
+          <View style={styles.modalContainer}>
+            <Icon name="alert-circle" size={60} color="#f44336" />
+            <Text style={styles.modalTitle}>Confirmar Desactivación</Text>
+            <Text style={styles.modalMessage}>¿Estás seguro que deseas desactivar este producto?</Text>
+            <View style={styles.modalButtonContainer}>
+              <TouchableOpacity onPress={handleConfirmDeactivate} style={styles.confirmButton}>
+                <Text style={styles.confirmButtonText}>Desactivar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={closeConfirmationModal} style={styles.cancelButton}>
+                <Text style={styles.cancelButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={closeModal}
+      >
+        <View style={styles.modalBackground}>
+          <View style={styles.modalContainer}>
+            <Icon name={isSuccess ? 'check-circle' : 'alert-circle'} size={60} color={isSuccess ? '#4caf50' : '#f44336'} />
+            <Text style={styles.modalTitle}>{isSuccess ? 'Éxito' : 'Error'}</Text>
+            <Text style={styles.modalMessage}>{modalMessage}</Text>
+            <TouchableOpacity onPress={closeModal} style={styles.finishButton}>
+              <Text style={styles.finishButtonText}>Cerrar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -149,11 +275,11 @@ const styles = StyleSheet.create({
   headerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingVertical: 15,
     backgroundColor: '#2D3A59',
     borderRadius: 10,
     marginBottom: 20,
-    marginHorizontal: 5,
   },
   backButton: {
     marginLeft: 8,
@@ -162,7 +288,20 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: 'white',
-    marginLeft: 8,
+    textAlign: 'left',
+    flex: 1, 
+    marginLeft: 1,
+  },
+  toggleButton: {
+    backgroundColor: '#1A73E8', 
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginRight: 8,
+  },
+  toggleButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
   },
   searchContainer: {
     marginBottom: 16,
@@ -220,32 +359,44 @@ const styles = StyleSheet.create({
   },
   actions: {
     flexDirection: 'row',
-    marginTop: 10,
+    marginTop: 15,
     justifyContent: 'space-between',
   },
   editButton: {
     backgroundColor: '#3BCEAC',
     paddingVertical: 8,
-    paddingHorizontal: 16,
+    paddingHorizontal: 10,
     borderRadius: 8,
     flexDirection: 'row',
     alignItems: 'center',
   },
   editButtonText: {
     color: '#1A2238',
-    marginLeft: 8,
+    marginLeft: 3,
   },
   deleteButton: {
     backgroundColor: '#FF6B6B',
     paddingVertical: 8,
-    paddingHorizontal: 16,
+    paddingHorizontal: 10,
     borderRadius: 8,
     flexDirection: 'row',
     alignItems: 'center',
   },
   deleteButtonText: {
     color: '#1A2238',
-    marginLeft: 8,
+    marginLeft: 3,
+  },
+  addAgainButton: {
+    backgroundColor: '#FFD700',
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  addAgainButtonText: {
+    color: '#1A2238',
+    marginLeft: 3,
   },
   loadingContainer: {
     flex: 1,
@@ -265,5 +416,65 @@ const styles = StyleSheet.create({
   noDataText: {
     color: '#FFFFFF',
     fontSize: 16,
+  },
+  modalBackground: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContainer: {
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 20,
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginTop: 10,
+    marginBottom: 10,
+  },
+  modalMessage: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  modalButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  confirmButton: {
+    backgroundColor: '#f44336',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    marginRight: 10,
+  },
+  confirmButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  cancelButton: {
+    backgroundColor: '#f1c40f',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+  },
+  cancelButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  finishButton: {
+    backgroundColor: '#4caf50',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    marginTop: 10,
+  },
+  finishButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
   },
 });

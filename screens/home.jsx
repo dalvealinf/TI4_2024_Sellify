@@ -8,11 +8,13 @@ import {
   Animated,
   ScrollView,
   Dimensions,
-  Image
+  Image,
+  Alert
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { LinearGradient } from 'expo-linear-gradient';
 import Swiper from 'react-native-swiper';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function PaginaPrincipal({ navigation }) {
   const funcionalidades = [
@@ -22,6 +24,7 @@ export default function PaginaPrincipal({ navigation }) {
     { nombre: 'Agregar Productos', icono: 'plus-box-outline', screen: 'AddProduct' },
     { nombre: 'Gestionar Usuarios', icono: 'account-multiple-plus-outline', screen: 'UserManagement' },
     { nombre: 'Estadísticas', icono: 'chart-pie', screen: 'DashBoard'  },
+    { nombre: 'Perfil', icono: 'account-circle', screen: 'ProfileScreen' },  // Botón de perfil agregado
   ];
 
   const slideAnim = useRef(new Animated.Value(200)).current;
@@ -35,6 +38,20 @@ export default function PaginaPrincipal({ navigation }) {
     }).start();
   }, [slideAnim]);
 
+  // Función para cerrar sesión
+  const handleLogout = async () => {
+    try {
+      // Eliminar token del almacenamiento
+      await AsyncStorage.removeItem('token');
+      // Mostrar el mensaje de confirmación
+      Alert.alert("Cerrar sesión", "Se ha cerrado la sesión con éxito.", [
+        { text: "OK", onPress: () => navigation.replace('Login') } // Redirigir a la pantalla de login
+      ]);
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
@@ -47,7 +64,7 @@ export default function PaginaPrincipal({ navigation }) {
         />
       </View>
 
-      {/* Carrusel y las funcionalidades juntas para el scroll */}
+     
       <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.scrollContent}>
         
         <View style={styles.carouselContainer}>
@@ -70,7 +87,7 @@ export default function PaginaPrincipal({ navigation }) {
           </Swiper>
         </View>
 
-        {/* Botones con las funcionalidades */}
+        
         <Animated.View style={[styles.grid, { transform: [{ translateX: slideAnim }] }]}>
           <View style={styles.row}>
             <View style={styles.column}>
@@ -113,10 +130,13 @@ export default function PaginaPrincipal({ navigation }) {
         </Animated.View>
       </ScrollView>
 
-      <TouchableOpacity style={styles.logoutButton}>
+   
+      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Icon name="logout" size={24} color="#FFFFFF" />
         <Text style={styles.logoutText}>Cerrar Sesión</Text>
       </TouchableOpacity>
+
+      
     </View>
   );
 }
@@ -189,7 +209,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#FFFFFF',
   },
-  // Estilos del carrusel
+ 
   carouselContainer: {
     borderRadius: 10,
     overflow: 'hidden',

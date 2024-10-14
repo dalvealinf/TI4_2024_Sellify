@@ -35,7 +35,7 @@ export default function BarcodeScannerPage({ navigation }) {
     setScanned(true);
     setBarcodeData(data);
     setModalVisible(true);
-    setIsReadyToScan(false); // Disable scanning after successful scan
+    setIsReadyToScan(false); 
     Animated.timing(buttonOpacity, {
       toValue: 1,
       duration: 500,
@@ -45,19 +45,19 @@ export default function BarcodeScannerPage({ navigation }) {
 
   const closeModal = () => {
     setModalVisible(false);
-    setScanned(false); // Allow the scanner to be used again
-    setBarcodeData(''); // Clear the scanned data
-    setIsReadyToScan(true); // Re-enable scanning
+    setScanned(false); 
+    setBarcodeData(''); 
+    setIsReadyToScan(true);
   };
 
   const goToAddProduct = () => {
     setModalVisible(false);
-    navigation.navigate('AddProduct', { scannedBarcode: barcodeData }); // Navigate to AddProduct and pass barcode data
+    navigation.navigate('AddProduct', { scannedBarcode: barcodeData }); 
   };
 
   const goToInventory = () => {
     setModalVisible(false);
-    navigation.navigate('InventoryScreen', { searchBarcode: barcodeData }); // Navigate to InventoryScreen and pass barcode data
+    navigation.navigate('InventoryScreen', { searchBarcode: barcodeData }); 
   };
 
   if (hasPermission === null) {
