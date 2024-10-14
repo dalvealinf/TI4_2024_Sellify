@@ -12,6 +12,8 @@ import UserManagement from './screens/GestionUsuarios';
 import AddUser from './screens/addUsuario';
 import InventoryScreen from './screens/GestionInventario';
 import EditProduct from './screens/EditProduct';
+import ProfileScreen from './screens/Profile';
+import EditUser from './screens/EditUser';
 
 
 const Stack = createStackNavigator();
@@ -30,6 +32,8 @@ export default function App() {
         <Stack.Screen name="AddUser" component={AddUser} />
         <Stack.Screen name="InventoryScreen" component={InventoryScreen} />
         <Stack.Screen name="EditProduct" component={EditProduct} />
+        <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
+        <Stack.Screen name="EditUser" component={EditUser} />
       </Stack.Navigator>
     </NavigationContainer>
   );

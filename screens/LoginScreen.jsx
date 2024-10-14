@@ -3,30 +3,20 @@ import { StyleSheet, Text, View, TextInput, TouchableOpacity, Dimensions, Animat
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage'; // Importación de AsyncStorage
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Obtener correctamente las dimensiones de la pantalla
 const { width, height } = Dimensions.get('window');
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false); // Estado de carga
-  const [username, setUsername] = useState(''); // Estado para el nombre de usuario
-  const [password, setPassword] = useState(''); // Estado para la contraseña
-  const [error, setError] = useState(null); // Estado para manejar errores
-  const [rememberMe, setRememberMe] = useState(false); // Estado para "Recuérdame"
-  const navigation = useNavigation(); // Hook para acceder a la navegación
-
-  // Animaciones
-  const [cardPosition] = useState(new Animated.Value(height)); // Estado inicial fuera de la pantalla
-  const [cardOpacity] = useState(new Animated.Value(0)); // Opacidad inicial
-  const [iconScale] = useState(new Animated.Value(0.8)); // Estado inicial de la escala
-  const [iconRotation] = useState(new Animated.Value(0)); // Estado inicial de la rotación
-  const [inputPosition] = useState(new Animated.Value(-width)); // Deslizamiento desde la izquierda
-  const [buttonPosition] = useState(new Animated.Value(height)); // Deslizamiento desde abajo
+  const [loading, setLoading] = useState(false);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState(null);
+  const [rememberMe, setRememberMe] = useState(false);
+  const navigation = useNavigation();
 
   useEffect(() => {
-    // Función para cargar credenciales guardadas
     const loadCredentials = async () => {
       try {
         const savedCredentials = await AsyncStorage.getItem('credentials');
@@ -42,195 +32,140 @@ export default function Login() {
     };
 
     loadCredentials();
-
-    // Animación de entrada del Card
-    Animated.parallel([
-      Animated.timing(cardPosition, {
-        toValue: 0, // Mover el Card a su posición original
-        duration: 800, // Duración de la animación
-        useNativeDriver: true,
-      }),
-      Animated.timing(cardOpacity, {
-        toValue: 1, // Aumentar opacidad a 1
-        duration: 800, // Duración de la animación
-        useNativeDriver: true,
-      }),
-    ]).start();
-
-    // Animación del icono
-    Animated.parallel([
-      Animated.spring(iconScale, {
-        toValue: 1,
-        friction: 3,
-        tension: 200,
-        useNativeDriver: true,
-      }),
-      Animated.timing(iconRotation, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-    ]).start();
-
-    // Animación de los campos de entrada
-    Animated.timing(inputPosition, {
-      toValue: 0,
-      duration: 600,
-      delay: 200, // Pequeño retraso para crear el efecto escalonado
-      useNativeDriver: true,
-    }).start();
-
-    // Animación del botón de ingreso
-    Animated.timing(buttonPosition, {
-      toValue: 0,
-      duration: 600,
-      delay: 400, // Pequeño retraso para que el botón aparezca después de los campos
-      useNativeDriver: true,
-    }).start();
   }, []);
 
   const togglePasswordVisibility = () => setShowPassword(!showPassword);
 
   const handleLoginPress = async () => {
-    // Validar los datos de entrada
-    if (username.toLowerCase() === 'admin' && password === '12345') {
-      setLoading(true);
-      setError(null);
-      try {
+    setLoading(true);
+    setError(null);
+
+    if (!username || !password) {
+      setError("Por favor, ingrese su RUT y contraseña.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch('http://170.239.85.88:5000/login', {  // Usa tu IP local aquí
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ rut: username, contrasena: password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
         if (rememberMe) {
-          // Guardar credenciales
           await AsyncStorage.setItem('credentials', JSON.stringify({ username, password }));
         } else {
-          // Eliminar credenciales guardadas
           await AsyncStorage.removeItem('credentials');
         }
-      } catch (error) {
-        console.error('Error al guardar las credenciales', error);
+
+        await AsyncStorage.setItem('token', data.access_token);
+        navigation.navigate('Home');
+      } else {
+        setError(data.msg || 'Usuario o contraseña incorrectos');
       }
-      setTimeout(() => {
-        setLoading(false);
-        navigation.navigate('Home'); // Asegúrate de que el nombre coincida exactamente con el nombre de la pantalla en el stack
-      }, 2000); // Simulación de 2 segundos
-    } else {
-      setError('Usuario o contraseña incorrectos');
+    } catch (error) {
+      setError('Error al conectar con el servidor. Verifique la red.');
+      console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Interpolación para convertir el valor de rotación en grados
-  const rotation = iconRotation.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
-  });
-
   return (
     <View style={styles.container}>
-      {/* Background Decoration */}
+      
       <LinearGradient
         colors={['#6B46C1', '#ECC94B']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={[styles.circle, styles.circle1, { width: width * 1.2, height: width * 1.2 }]}
       />
-
       <LinearGradient
         colors={['#ECC94B', '#F687B3']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={[styles.circle, styles.circle2, { width: width * 1, height: width * 1 }]}
       />
-
       <LinearGradient
         colors={['#F687B3', '#6B46C1']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={[styles.circle, styles.circle3, { width: width * 0.8, height: width * 0.8 }]}
       />
-
       <LinearGradient
         colors={['#6B46C1', '#ECC94B']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={[styles.circle, styles.circle4, { width: width * 0.9, height: width * 0.9 }]}
       />
-
-      {/* Login Card con Animaciones */}
-      <Animated.View style={[styles.card, { opacity: cardOpacity, transform: [{ translateY: cardPosition }] }]}>
+      
+      <Animated.View style={[styles.card, { opacity: 1, transform: [{ translateY: 0 }] }]}>
         <View style={styles.cardHeader}>
-          <Animated.View style={{ transform: [{ scale: iconScale }, { rotate: rotation }] }}>
-            <Ionicons name="cube-outline" size={48} color="#5A67D8" />
-          </Animated.View>
+          <Ionicons name="cube-outline" size={48} color="#5A67D8" />
           <Text style={styles.cardTitle}>Iniciar Sesión</Text>
-          <Text style={styles.cardDescription}>
-            Accede al sistema de gestión de inventario y ventas
-          </Text>
+          <Text style={styles.cardDescription}>Accede al sistema de gestión de inventario y ventas</Text>
         </View>
 
-        {/* Mostrar mensaje de error */}
         {error && <Text style={{ color: 'red', marginBottom: 10 }}>{error}</Text>}
 
-        {/* Campos de entrada con deslizamiento */}
-        <Animated.View style={{ transform: [{ translateX: inputPosition }] }}>
-          <Text style={styles.label}>Usuario</Text>
+        <Text style={styles.label}>Usuario</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Ingrese su nombre de usuario"
+          placeholderTextColor="#888"
+          value={username}
+          onChangeText={setUsername}
+        />
+
+        <Text style={styles.label}>Contraseña</Text>
+        <View style={styles.passwordContainer}>
           <TextInput
             style={styles.input}
-            placeholder="Ingrese su nombre de usuario"
+            placeholder="Ingrese su contraseña"
             placeholderTextColor="#888"
-            value={username}
-            onChangeText={setUsername}
+            secureTextEntry={!showPassword}
+            value={password}
+            onChangeText={setPassword}
           />
-        </Animated.View>
-        <Animated.View style={{ transform: [{ translateX: inputPosition }] }}>
-          <Text style={styles.label}>Contraseña</Text>
-          <View style={styles.passwordContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="Ingrese su contraseña"
-              placeholderTextColor="#888"
-              secureTextEntry={!showPassword}
-              value={password}
-              onChangeText={setPassword}
+          <TouchableOpacity
+            style={styles.eyeButton}
+            onPress={togglePasswordVisibility}
+          >
+            <Ionicons
+              name={showPassword ? "eye-off-outline" : "eye-outline"}
+              size={24}
+              color="#888"
             />
-            <TouchableOpacity
-              style={styles.eyeButton}
-              onPress={togglePasswordVisibility}
-            >
-              <Ionicons
-                name={showPassword ? "eye-off-outline" : "eye-outline"}
-                size={24}
-                color="#888"
-              />
-            </TouchableOpacity>
-          </View>
-        </Animated.View>
-
-        {/* Checkbox de "Recuérdame" */}
-        <Animated.View style={{ transform: [{ translateX: inputPosition }] }}>
-          <View style={styles.rememberMeContainer}>
-            <TouchableOpacity onPress={() => setRememberMe(!rememberMe)} style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>
-              {rememberMe && <Ionicons name="checkmark" size={20} color="#fff" />}
-            </TouchableOpacity>
-            <Text style={styles.rememberMeText}>Recuérdame</Text>
-          </View>
-        </Animated.View>
-
-        {/* Botón de ingreso con animación y carga */}
-        <Animated.View style={{ transform: [{ translateY: buttonPosition }] }}>
-          <TouchableOpacity style={styles.loginButton} onPress={handleLoginPress} disabled={loading}>
-            {loading ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="small" color="#fff" />
-                <Text style={styles.loginButtonText}>Ingresando...</Text>
-              </View>
-            ) : (
-              <Text style={styles.loginButtonText}>Ingresar</Text>
-            )}
           </TouchableOpacity>
-        </Animated.View>
+        </View>
+
+        <View style={styles.rememberMeContainer}>
+          <TouchableOpacity onPress={() => setRememberMe(!rememberMe)} style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>
+            {rememberMe && <Ionicons name="checkmark" size={20} color="#fff" />}
+          </TouchableOpacity>
+          <Text style={styles.rememberMeText}>Recuérdame</Text>
+        </View>
+
+        <TouchableOpacity style={styles.loginButton} onPress={handleLoginPress} disabled={loading}>
+          {loading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="small" color="#fff" />
+              <Text style={styles.loginButtonText}>Ingresando...</Text>
+            </View>
+          ) : (
+            <Text style={styles.loginButtonText}>Ingresar</Text>
+          )}
+        </TouchableOpacity>
       </Animated.View>
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -241,7 +176,7 @@ const styles = StyleSheet.create({
   },
   circle: {
     position: "absolute",
-    borderRadius: 1000,  // Lo suficientemente grande para ser un círculo
+    borderRadius: 1000,  
     opacity: 0.7,
   },
   circle1: {
