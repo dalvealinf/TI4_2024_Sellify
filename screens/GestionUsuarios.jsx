@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+<<<<<<< HEAD
 import { Animated, View, Text, TextInput, Image, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import { useNavigation } from '@react-navigation/native';
@@ -11,10 +12,21 @@ const users = [
   { id: 5, name: 'Ethan Hunt', email: 'ethan@example.com', role: 'Admin', avatar: require('../assets/avatar.jpg') },
 ];
 
+=======
+import { Animated, View, Text, TextInput, Image, TouchableOpacity, ScrollView, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import Icon from 'react-native-vector-icons/Feather';
+import { useNavigation } from '@react-navigation/native';
+
+>>>>>>> dev
 export default function UserManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedUser, setExpandedUser] = useState(null);
   const [menuVisible, setMenuVisible] = useState(null);
+<<<<<<< HEAD
+=======
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(false);
+>>>>>>> dev
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const navigation = useNavigation();
 
@@ -24,11 +36,53 @@ export default function UserManagement() {
       duration: 1000,
       useNativeDriver: true,
     }).start();
+<<<<<<< HEAD
   }, [fadeAnim]);
 
   const filteredUsers = users.filter(user =>
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email.toLowerCase().includes(searchTerm.toLowerCase())
+=======
+
+    // Obtener datos de la API
+    fetchUsersFromAPI();
+  }, [fadeAnim]);
+
+  // Función para hacer la solicitud a la API con reintentos
+  const fetchWithRetry = async (url, options = {}, retries = 50, delay = 500) => {
+    try {
+      const response = await fetch(url, options);
+      if (!response.ok) throw new Error('Error en la solicitud');
+      return await response.json();
+    } catch (error) {
+      if (retries > 0) {
+        console.log(`Reintentando... ${retries} intentos restantes`);
+        await new Promise(res => setTimeout(res, delay));
+        return fetchWithRetry(url, options, retries - 1, delay);
+      } else {
+        throw error;
+      }
+    }
+  };
+
+  // Llamada a la API
+  const fetchUsersFromAPI = async () => {
+    setLoading(true); // Mostrar el indicador de carga desde el inicio del proceso
+    try {
+      const data = await fetchWithRetry('http://170.239.85.88:5000/users');
+      setUsers(data);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      Alert.alert('Error', 'No se pudieron obtener los usuarios. Verifica tu conexión.');
+    } finally {
+      setLoading(false); // Ocultar el indicador de carga cuando se terminen los intentos
+    }
+  };
+
+  const filteredUsers = users.filter(user =>
+    user.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.correo.toLowerCase().includes(searchTerm.toLowerCase())
+>>>>>>> dev
   );
 
   return (
@@ -65,6 +119,7 @@ export default function UserManagement() {
         </TouchableOpacity>
       </View>
 
+<<<<<<< HEAD
       <ScrollView>
         {filteredUsers.map((user) => (
           <View key={user.id} style={styles.userCard}>
@@ -121,6 +176,71 @@ export default function UserManagement() {
           </View>
         ))}
       </ScrollView>
+=======
+      {/* Mostrar el indicador de carga */}
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#00ff00" />
+          <Text style={styles.loadingText}>Cargando usuarios...</Text>
+        </View>
+      ) : (
+        <ScrollView>
+          {filteredUsers.map((user) => (
+            <View key={user.id_usuario} style={styles.userCard}>
+              <View style={styles.userInfo}>
+                <Image
+                  source={require('../assets/avatar.jpg')} // Usa una imagen por defecto
+                  style={styles.avatar}
+                />
+                <View>
+                  <Text style={styles.userName}>{`${user.nombre} ${user.apellido}`}</Text>
+                  <Text style={styles.userEmail}>{user.correo}</Text>
+                </View>
+              </View>
+
+              <View style={styles.userActions}>
+                <Text style={styles.roleBadge}>Usuario</Text>
+
+                <TouchableOpacity
+                  style={styles.moreButton}
+                  onPress={() => setMenuVisible(menuVisible === user.id_usuario ? null : user.id_usuario)}
+                >
+                  <Icon name="more-vertical" size={20} color="white" />
+                </TouchableOpacity>
+
+                {menuVisible === user.id_usuario && (
+                  <View style={styles.dropdownMenu}>
+                    <TouchableOpacity style={styles.menuItem}>
+                      <Icon name="edit" size={16} color="white" />
+                      <Text style={styles.menuText}>Editar</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.menuItem}>
+                      <Icon name="trash" size={16} color="white" />
+                      <Text style={styles.menuText}>Eliminar</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+
+                <TouchableOpacity
+                  onPress={() => setExpandedUser(expandedUser === user.id_usuario ? null : user.id_usuario)}
+                  style={styles.expandButton}
+                >
+                  <Icon name="chevron-down" size={20} color="white" />
+                </TouchableOpacity>
+              </View>
+
+              {expandedUser === user.id_usuario && (
+                <View style={styles.additionalInfo}>
+                  <Text style={styles.additionalText}>Correo: {user.correo}</Text>
+                  <Text style={styles.additionalText}>Teléfono: {user.telefono}</Text>
+                  <Text style={styles.additionalText}>RUT: {user.rut}</Text>
+                </View>
+              )}
+            </View>
+          ))}
+        </ScrollView>
+      )}
+>>>>>>> dev
     </View>
   );
 }
@@ -266,4 +386,18 @@ const styles = StyleSheet.create({
     color: 'white',
     marginLeft: 8,
   },
+<<<<<<< HEAD
+=======
+  loadingContainer: {
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#ffffff',
+  },
+>>>>>>> dev
 });

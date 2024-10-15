@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+<<<<<<< HEAD
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Modal } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 
@@ -182,6 +183,196 @@ export default function AddUserScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+=======
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import Icon from 'react-native-vector-icons/Feather';
+import { Switch } from 'react-native-paper';  // Usamos react-native-paper para el Switch
+
+export default function AddUserScreen({ navigation }) {
+  const [name, setName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [rut, setRut] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [phone, setPhone] = useState('');
+  const [role, setRole] = useState('user');
+  const [isActive, setIsActive] = useState(true);
+  const [loading, setLoading] = useState(false);
+
+  // Función para agregar usuario
+  const handleAddUser = async () => {
+    // Verificar si todos los campos están completos antes de intentar el registro
+    if (name && lastName && rut && email && password && phone) {
+      setLoading(true);
+
+      const userData = {
+        nombre: name,
+        apellido: lastName,
+        rut: rut,
+        correo: email,
+        contrasena: password,
+        telefono: phone,
+        // Los siguientes valores solo se usan como frontend
+        role: role, 
+        isActive: isActive,
+      };
+
+      try {
+        const options = {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(userData),
+        };
+
+        await fetch('http://170.239.85.88:5000/register', options);
+        
+        // Mostrar mensaje genérico de acción realizada
+        Alert.alert('Acción realizada', 'La acción fue completada exitosamente.');
+      } catch (error) {
+        Alert.alert('Acción realizada', 'La acción fue completada exitosamente.');
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      Alert.alert('Error', 'Por favor, rellena todos los campos.');
+    }
+  };
+
+  return (
+    <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+            <Icon name="arrow-left" size={20} color="white" />
+          </TouchableOpacity>
+          
+          <Text style={styles.backButtonText}>Gestión de Usuarios</Text>
+        </View>
+
+        {/* Inputs de Nombre, Apellido, RUT, Email, Teléfono y Contraseña */}
+        <View style={styles.inputContainer}>
+          <Icon name="user" size={20} color="#fff" style={styles.inputIcon} />
+          <TextInput
+            style={styles.input}
+            placeholder="Nombre"
+            placeholderTextColor="#aaa"
+            value={name}
+            onChangeText={setName}
+          />
+        </View>
+
+        <View style={styles.inputContainer}>
+          <Icon name="user" size={20} color="#fff" style={styles.inputIcon} />
+          <TextInput
+            style={styles.input}
+            placeholder="Apellido"
+            placeholderTextColor="#aaa"
+            value={lastName}
+            onChangeText={setLastName}
+          />
+        </View>
+
+        <View style={styles.inputContainer}>
+          <Icon name="credit-card" size={20} color="#fff" style={styles.inputIcon} />
+          <TextInput
+            style={styles.input}
+            placeholder="RUT"
+            placeholderTextColor="#aaa"
+            value={rut}
+            onChangeText={setRut}
+          />
+        </View>
+
+        <View style={styles.inputContainer}>
+          <Icon name="mail" size={20} color="#fff" style={styles.inputIcon} />
+          <TextInput
+            style={styles.input}
+            placeholder="correo@ejemplo.com"
+            placeholderTextColor="#aaa"
+            value={email}
+            onChangeText={setEmail}
+          />
+        </View>
+
+        <View style={styles.inputContainer}>
+          <Icon name="lock" size={20} color="#fff" style={styles.inputIcon} />
+          <TextInput
+            style={styles.input}
+            placeholder="Contraseña"
+            placeholderTextColor="#aaa"
+            secureTextEntry
+            value={password}
+            onChangeText={setPassword}
+          />
+        </View>
+
+        <View style={styles.inputContainer}>
+          <Icon name="phone" size={20} color="#fff" style={styles.inputIcon} />
+          <TextInput
+            style={styles.input}
+            placeholder="Teléfono"
+            placeholderTextColor="#aaa"
+            value={phone}
+            onChangeText={setPhone}
+            keyboardType="phone-pad"
+          />
+        </View>
+
+        {/* Selección de Rol */}
+        <Text style={styles.roleLabel}>Rol</Text>
+        <View style={styles.roleContainer}>
+          <TouchableOpacity
+            style={[styles.roleButton, role === 'user' ? styles.activeRoleButton : null]}
+            onPress={() => setRole('user')}
+          >
+            <Text style={[styles.roleText, role === 'user' ? styles.activeRoleText : null]}>Vendedor</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.roleButton, role === 'admin' ? styles.activeRoleButton : null]}
+            onPress={() => setRole('admin')}
+          >
+            <Text style={[styles.roleText, role === 'admin' ? styles.activeRoleText : null]}>Administrador</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Switch de Usuario Activo */}
+        <View style={styles.switchContainer}>
+          <Text style={styles.switchLabel}>Usuario Activo</Text>
+          <Switch
+            value={isActive}
+            onValueChange={() => setIsActive(!isActive)}
+            color="#FF6B6B"
+          />
+        </View>
+
+        {/* Animación de carga mientras se realiza la solicitud */}
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#00ff00" />
+            <Text style={styles.loadingText}>Registrando usuario...</Text>
+          </View>
+        ) : (
+          <TouchableOpacity onPress={handleAddUser} style={styles.addButton}>
+            <View style={styles.addButtonBackground}>
+              <Icon name="user-plus" size={20} color="white" />
+              <Text style={styles.addButtonText}>Crear Usuario</Text>
+            </View>
+          </TouchableOpacity>
+        )}
+      </View>
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  scrollContainer: {
+    flexGrow: 1,
+    justifyContent: 'center',
+  },
+  container: {
+>>>>>>> dev
     padding: 20,
     justifyContent: 'center',
     backgroundColor: '#1A2238',
@@ -203,6 +394,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
+<<<<<<< HEAD
   title: {
     fontSize: 32,
     fontWeight: 'bold',
@@ -213,6 +405,8 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 5,
   },
+=======
+>>>>>>> dev
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -296,6 +490,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginLeft: 10,
   },
+<<<<<<< HEAD
   modalBackground: {
     flex: 1,
     justifyContent: 'center',
@@ -332,5 +527,17 @@ const styles = StyleSheet.create({
   closeButtonText: {
     color: 'white',
     fontWeight: 'bold',
+=======
+  loadingContainer: {
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#ffffff',
+>>>>>>> dev
   },
 });

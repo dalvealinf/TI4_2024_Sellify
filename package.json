@@ -15,13 +15,20 @@
     "@react-native-picker/picker": "^2.8.0",
     "@react-navigation/native": "^6.1.18",
     "@react-navigation/stack": "^6.4.1",
+<<<<<<< HEAD
+=======
+    "axios": "^1.7.7",
+>>>>>>> dev
     "expo": "~51.0.28",
     "expo-barcode-scanner": "^13.0.1",
     "expo-camera": "~15.0.15",
     "expo-linear-gradient": "^13.0.2",
     "expo-status-bar": "~1.12.1",
     "framer-motion": "^11.5.4",
+<<<<<<< HEAD
     "jwt-decode": "^4.0.0",
+=======
+>>>>>>> dev
     "react": "18.2.0",
     "react-feather": "^2.0.10",
     "react-native": "0.74.5",
@@ -36,7 +43,11 @@
     "react-native-snap-carousel": "^3.9.1",
     "react-native-svg": "^15.6.0",
     "react-native-swiper": "^1.6.0",
+<<<<<<< HEAD
     "react-native-vector-icons": "^10.2.0"
+=======
+    "react-native-vector-icons": "^10.1.0"
+>>>>>>> dev
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"
