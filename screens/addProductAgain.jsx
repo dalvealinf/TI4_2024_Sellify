@@ -4,8 +4,9 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  ScrollView,
   StyleSheet,
+  ScrollView,
+  Alert,
   Modal,
   TouchableWithoutFeedback,
   Keyboard,
@@ -13,41 +14,31 @@ import {
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
-export default function EditProduct({ route, navigation }) {
-  const { product } = route.params;
+export default function AddProductAgain({ navigation, route }) {
+    const validateDate = (dateString) => {
+        const date = new Date(dateString);
+        return !isNaN(date.getTime()) ? date : new Date(); // Use current date if invalid
+      };
 
-  // Helper function to validate dates
-  const validateDate = (dateString) => {
-    const date = new Date(dateString);
-    return !isNaN(date.getTime()) ? date : new Date(); // Use current date if invalid
-  };
+  const [nombre, setNombre] = useState((route.params.product.nombre) || '');
+  const [categoria, setCategoria] = useState((route.params.product.categoria) || 'Lacteos');
+  const [precio, setPrecio] = useState((route.params.product.precio_venta) || '');
+  const [stock, setStock] = useState(route.params.product.stock ? String(route.params.product.stock) : '');
+  const [descuento, setDescuento] = useState((route.params.product.descuento) || '0');
+  const [fechaCompra, setFechaCompra] = useState(validateDate(route.params.product.fecha_registro));
+  const [fechaVencimiento, setFechaVencimiento] = useState(validateDate(route.params.product.fecha_vencimiento));
+  const [barcode, setBarcode] = useState((route.params.product.codigo_barras) || '');
+  const [description, setDescription] = useState((route.params.product.descripcion) || '');
 
-  // States for product data
-  const [nombre, setNombre] = useState((product.nombre) || '');
-  const [categoria, setCategoria] = useState((product.categoria) || 'Lacteos');
-  const [precio, setPrecio] = useState((product.precio_venta) || '');
-  const [stock, setStock] = useState(product.stock ? String(product.stock) : '');
-  const [descuento, setDescuento] = useState((product.descuento) || '0');
-  const [fechaCompra, setFechaCompra] = useState(validateDate(product.fecha_registro));
-  const [fechaVencimiento, setFechaVencimiento] = useState(validateDate(product.fecha_vencimiento));
-  const [barcode, setBarcode] = useState((product.codigo_barras) || '');
-  const [description, setDescription] = useState((product.descripcion) || '');
-
-  // State to manage product status (estado)
-  const [isActive, setIsActive] = useState(product.estado_producto === 'activo'); // True if active, False if inactive
-
+  const [showFechaCompraPicker, setShowFechaCompraPicker] = useState(false);
+  const [showFechaVencimientoPicker, setShowFechaVencimientoPicker] = useState(false);
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const [categories, setCategories] = useState([]);
   const [filteredCategories, setFilteredCategories] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [customCategory, setCustomCategory] = useState(categoria);
-
-  const [showFechaCompraPicker, setShowFechaCompraPicker] = useState(false);
-  const [showFechaVencimientoPicker, setShowFechaVencimientoPicker] = useState(false);
+  const [customCategory, setCustomCategory] = useState('');
 
   const [modalVisible, setModalVisible] = useState(false);
-  const [errorModalVisible, setErrorModalVisible] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     async function fetchCategories() {
@@ -58,8 +49,7 @@ export default function EditProduct({ route, navigation }) {
         setFilteredCategories(result);
       } catch (error) {
         console.error('Error fetching categories:', error);
-        setErrorMessage('No se pudo obtener las categorías.');
-        setErrorModalVisible(true);
+        Alert.alert('Error', 'No se pudo obtener las categorías');
       }
     }
 
@@ -100,44 +90,57 @@ export default function EditProduct({ route, navigation }) {
     }
   };
 
-  // Function to edit the product via the API
-  const handleEditProduct = async () => {
-    const updatedProduct = {
-      nombre: nombre,
+  const handleAddProduct = async () => {
+    if (nombre.trim() === '' || precio === '' || stock === '' || barcode.trim() === '') {
+      Alert.alert('Error', 'Por favor complete todos los campos obligatorios.');
+      return;
+    }
+
+    if (isNaN(precio) || isNaN(stock)) {
+      Alert.alert('Error', 'Precio y Stock deben ser valores numéricos.');
+      return;
+    }
+
+    if (barcode.length !== 13 || isNaN(barcode)) {
+      Alert.alert('Error', 'El código de barras debe contener exactamente 13 dígitos.');
+      return;
+    }
+
+    const productData = {
+      nombre,
       descripcion: description,
       fecha_vencimiento: fechaVencimiento.toISOString().split('T')[0],
       stock: parseInt(stock),
       descuento: descuento ? parseFloat(descuento) : 0,
       precio_venta: parseFloat(precio),
-      estado: isActive ? 'activo' : 'inactivo', // Estado based on the toggle
+      estado: "activo", 
       categoria,
+      codigo_barras: barcode,
     };
 
     try {
-      const response = await fetch(`http://170.239.85.88:5000/product/barcode/${barcode}`, {
-        method: 'PUT',
+      const response = await fetch('http://170.239.85.88:5000/product', {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(updatedProduct),
+        body: JSON.stringify(productData),
       });
 
       const result = await response.json();
 
       if (response.ok) {
-        setModalVisible(true); // Show success modal
+        setModalVisible(true);
       } else {
-        setErrorMessage(result.msg || 'Hubo un error al editar el producto');
-        setErrorModalVisible(true);
+        Alert.alert('Error', result.msg || 'Hubo un error al agregar el producto');
       }
     } catch (error) {
-      console.error('Error editing product:', error);
-      setErrorMessage('No se pudo conectar con el servidor.');
-      setErrorModalVisible(true);
+      console.error('Error al agregar producto:', error);
+      Alert.alert('Error', 'No se pudo conectar con el servidor');
     }
   };
 
-  const closeEditModal = () => {
+  const closeModal = () => {
     setModalVisible(false);
     navigation.goBack();
   };
@@ -149,33 +152,21 @@ export default function EditProduct({ route, navigation }) {
           animationType="slide"
           transparent={true}
           visible={modalVisible}
-          onRequestClose={closeEditModal}
+          onRequestClose={() => setModalVisible(false)}
         >
           <View style={styles.modalBackground}>
             <View style={styles.modalContainer}>
               <Icon name="check-circle" size={60} color="#4caf50" />
-              <Text style={styles.modalTitle}>¡Producto Editado!</Text>
-              <TouchableOpacity onPress={closeEditModal} style={styles.finishButton}>
-                <Text style={styles.finishButtonText}>Regresar</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
-
-        <Modal
-          animationType="slide"
-          transparent={true}
-          visible={errorModalVisible}
-          onRequestClose={() => setErrorModalVisible(false)}
-        >
-          <View style={styles.modalBackground}>
-            <View style={styles.modalContainer}>
-              <Icon name="alert-circle" size={60} color="#e74c3c" />
-              <Text style={styles.modalTitle}>Error</Text>
-              <Text style={styles.modalMessage}>{errorMessage}</Text>
-              <TouchableOpacity onPress={() => setErrorModalVisible(false)} style={styles.finishButton}>
-                <Text style={styles.finishButtonText}>Cerrar</Text>
-              </TouchableOpacity>
+              <Text style={styles.modalTitle}>¡Producto Agregado!</Text>
+              <Text style={styles.modalMessage}>El nuevo producto ha sido agregado correctamente.</Text>
+              <View style={styles.modalButtonContainer}>
+                <TouchableOpacity onPress={() => { setModalVisible(false); }} style={styles.addMoreButton}>
+                  <Text style={styles.addMoreButtonText}>Agregar Otro</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={closeModal} style={styles.finishButton}>
+                  <Text style={styles.finishButtonText}>Terminar</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </Modal>
@@ -184,7 +175,7 @@ export default function EditProduct({ route, navigation }) {
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <Icon name="arrow-left" size={24} color="#FFFFFF" />
           </TouchableOpacity>
-          <Text style={styles.title}>Editar Producto</Text>
+          <Text style={styles.title}>Agregar Producto</Text>
         </View>
 
         <Text style={styles.label}>Nombre</Text>
@@ -193,7 +184,7 @@ export default function EditProduct({ route, navigation }) {
           value={nombre}
           onChangeText={setNombre}
           placeholder="Nombre del producto"
-          placeholderTextColor={'#ABB2B9'}
+          placeholderTextColor="#ABB2B9"
         />
 
         <Text style={styles.label}>Categoría</Text>
@@ -233,23 +224,6 @@ export default function EditProduct({ route, navigation }) {
           </View>
         )}
 
-        <Text style={styles.label}>Estado del Producto</Text>
-        <View style={styles.switchContainer}>
-          <TouchableOpacity
-            style={[styles.toggleButton, isActive ? styles.activeButton : styles.inactiveButton]}
-            onPress={() => setIsActive(true)}
-          >
-            <Text style={[styles.toggleText, isActive ? styles.activeText : styles.inactiveText]}>Activo</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.toggleButton, !isActive ? styles.activeButton : styles.inactiveButton]}
-            onPress={() => setIsActive(false)}
-          >
-            <Text style={[styles.toggleText, !isActive ? styles.activeText : styles.inactiveText]}>Inactivo</Text>
-          </TouchableOpacity>
-        </View>
-
         <Text style={styles.label}>Descripción</Text>
         <TextInput
           style={styles.input}
@@ -279,7 +253,7 @@ export default function EditProduct({ route, navigation }) {
           keyboardType="numeric"
         />
 
-        <Text style={styles.label}>Descuento (opcional)</Text>
+        <Text style={styles.label}>Descuento (%) (opcional)</Text>
         <TextInput
           style={styles.input}
           value={descuento}
@@ -331,8 +305,8 @@ export default function EditProduct({ route, navigation }) {
           keyboardType="numeric"
         />
 
-        <TouchableOpacity style={styles.solidButton} onPress={handleEditProduct}>
-          <Text style={styles.solidButtonText}>Guardar Cambios</Text>
+        <TouchableOpacity style={styles.solidButton} onPress={handleAddProduct}>
+          <Text style={styles.solidButtonText}>Agregar Producto</Text>
         </TouchableOpacity>
       </ScrollView>
     </TouchableWithoutFeedback>
@@ -378,7 +352,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     borderColor: '#3BCEAC',
     borderWidth: 1,
-    position: 'relative', // For dropdown alignment
+    position: 'relative',
     zIndex: 1,
   },
   dropdownContainer: {
@@ -386,7 +360,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderColor: '#3BCEAC',
     borderWidth: 1,
-    marginTop: -10, // Attach to input field seamlessly
+    marginTop: -10,
     overflow: 'hidden',
     position: 'relative',
     zIndex: 1,
@@ -450,47 +424,30 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 20,
   },
+  modalButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  addMoreButton: {
+    backgroundColor: '#f1c40f',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    marginRight: 10,
+  },
+  addMoreButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
   finishButton: {
     backgroundColor: '#4caf50',
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 5,
-    marginTop: 10,
   },
   finishButtonText: {
     color: 'white',
     fontWeight: 'bold',
-  },
-  switchContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 15,
-  },
-  toggleButton: {
-    flex: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    marginHorizontal: 5,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-  },
-  activeButton: {
-    backgroundColor: '#3BCEAC', // Same color as the solid buttons
-    borderColor: '#3BCEAC',
-  },
-  inactiveButton: {
-    backgroundColor: 'transparent', // No fill for the inactive button
-    borderColor: '#3BCEAC', // Use the same border color
-  },
-  toggleText: {
-    fontWeight: 'bold',
-  },
-  activeText: {
-    color: '#1A2238', // Dark color for the active state
-  },
-  inactiveText: {
-    color: '#ABB2B9', // Light color for the inactive state
   },
 });

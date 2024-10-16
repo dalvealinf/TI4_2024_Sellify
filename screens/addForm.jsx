@@ -4,15 +4,13 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
   ScrollView,
-  Alert,
   Modal,
+  StyleSheet,
   TouchableWithoutFeedback,
   Keyboard,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import DateTimePicker from '@react-native-community/datetimepicker';
 
 export default function AddProduct({ navigation, route }) {
   const { scannedBarcode } = route.params || {};
@@ -35,20 +33,22 @@ export default function AddProduct({ navigation, route }) {
   const [customCategory, setCustomCategory] = useState('');
 
   const [modalVisible, setModalVisible] = useState(false);
+  const [addCategoryModalVisible, setAddCategoryModalVisible] = useState(false);
+  const [categorySuccessModalVisible, setCategorySuccessModalVisible] = useState(false); // New success modal state
+  const [newCategoryName, setNewCategoryName] = useState('');
+
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch('http://170.239.85.88:5000/categories');
+      const result = await response.json();
+      setCategories(result);
+      setFilteredCategories(result);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    }
+  };
 
   useEffect(() => {
-    async function fetchCategories() {
-      try {
-        const response = await fetch('http://170.239.85.88:5000/categories');
-        const result = await response.json();
-        setCategories(result);
-        setFilteredCategories(result);
-      } catch (error) {
-        console.error('Error fetching categories:', error);
-        Alert.alert('Error', 'No se pudo obtener las categorías');
-      }
-    }
-
     fetchCategories();
 
     const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
@@ -136,6 +136,37 @@ export default function AddProduct({ navigation, route }) {
     }
   };
 
+  const handleAddCategory = async () => {
+    if (newCategoryName.trim() === '') {
+      Alert.alert('Error', 'El nombre de la categoría no puede estar vacío.');
+      return;
+    }
+
+    try {
+      const response = await fetch('http://170.239.85.88:5000/categories', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ nombre_categoria: newCategoryName }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        setAddCategoryModalVisible(false);
+        setCategorySuccessModalVisible(true); // Show success modal
+        setNewCategoryName(''); // Reset the input field after success
+        fetchCategories(); // Refresh categories after adding a new one
+      } else {
+        Alert.alert('Error', result.msg || 'Hubo un error al agregar la categoría');
+      }
+    } catch (error) {
+      console.error('Error al agregar categoría:', error);
+      Alert.alert('Error', 'No se pudo conectar con el servidor');
+    }
+  };
+
   const closeModal = () => {
     setModalVisible(false);
     navigation.goBack();
@@ -144,6 +175,8 @@ export default function AddProduct({ navigation, route }) {
   return (
     <TouchableWithoutFeedback onPress={handleFieldPress}>
       <ScrollView contentContainerStyle={styles.container}>
+        
+        {/* Modal for Add Product */}
         <Modal
           animationType="slide"
           transparent={true}
@@ -167,13 +200,70 @@ export default function AddProduct({ navigation, route }) {
           </View>
         </Modal>
 
+        {/* Success Modal for Category Addition */}
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={categorySuccessModalVisible}
+          onRequestClose={() => setCategorySuccessModalVisible(false)}
+        >
+          <View style={styles.modalBackground}>
+            <View style={styles.modalContainer}>
+              <Icon name="check-circle" size={60} color="#4caf50" />
+              <Text style={styles.modalTitle}>¡Categoría Agregada!</Text>
+              <Text style={styles.modalMessage}>La nueva categoría ha sido agregada correctamente.</Text>
+              <View style={styles.modalButtonContainer}>
+                <TouchableOpacity onPress={() => { setCategorySuccessModalVisible(false); }} style={styles.finishButton}>
+                  <Text style={styles.finishButtonText}>Cerrar</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Modal for Add Category */}
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={addCategoryModalVisible}
+          onRequestClose={() => setAddCategoryModalVisible(false)}
+        >
+          <View style={styles.addCategoryModalBackground}> 
+            <View style={styles.addCategoryModalContainer}> 
+              <Text style={styles.addCategoryModalTitle}>Agregar Nueva Categoría</Text>
+              <TextInput
+                style={styles.addCategoryInput} 
+                value={newCategoryName}
+                onChangeText={setNewCategoryName}
+                placeholder="Nombre de la categoría"
+                placeholderTextColor="#ABB2B9"
+              />
+              <View style={styles.addCategoryModalButtonContainer}>
+                <TouchableOpacity onPress={handleAddCategory} style={styles.addCategorySolidButton}>
+                  <Text style={styles.addCategorySolidButtonText}>Agregar Categoría</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => setAddCategoryModalVisible(false)} style={styles.addCategoryCancelButton}>
+                  <Text style={styles.addCategoryCancelButtonText}>Cancelar</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <Icon name="arrow-left" size={24} color="#FFFFFF" />
           </TouchableOpacity>
           <Text style={styles.title}>Agregar Producto</Text>
+          <TouchableOpacity
+            style={styles.addCategoryButton}
+            onPress={() => setAddCategoryModalVisible(true)}
+          >
+            <Text style={styles.addCategoryText}>Agregar Categoría</Text>
+          </TouchableOpacity>
         </View>
 
+        {/* Form Fields */}
         <Text style={styles.label}>Nombre</Text>
         <TextInput
           style={styles.input}
@@ -187,7 +277,6 @@ export default function AddProduct({ navigation, route }) {
         <TouchableOpacity style={styles.input} onPress={toggleDropdown}>
           <Text style={styles.dropdownText}>{categoria || 'Escribe la categoría'}</Text>
         </TouchableOpacity>
-
         {dropdownVisible && (
           <View style={styles.dropdownContainer}>
             <TextInput
@@ -319,7 +408,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     paddingVertical: 15,
     backgroundColor: '#2D3A59',
     borderRadius: 10,
@@ -327,13 +416,27 @@ const styles = StyleSheet.create({
     marginHorizontal: 5,
   },
   backButton: {
+    marginLeft: 8,
+  },
+  addCategoryButton: {
     position: 'absolute',
-    left: 15,
+    right: 15,
+    backgroundColor: '#3BCEAC',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+  },
+  addCategoryText: {
+    color: '#1A2238',
+    fontWeight: 'bold',
   },
   title: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: 'white',
+    textAlign: 'left',
+    flex: 1, 
+    marginLeft: 1,
   },
   label: {
     color: '#FFFFFF',
@@ -348,8 +451,6 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     borderColor: '#3BCEAC',
     borderWidth: 1,
-    position: 'relative',
-    zIndex: 1,
   },
   dropdownContainer: {
     backgroundColor: '#2D3A59',
@@ -397,6 +498,65 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
   },
+
+  // Styles for AddCategoryModal (isolated from other modals)
+  addCategoryModalBackground: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  addCategoryModalContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    padding: 20,
+    width: '80%',
+    alignItems: 'center',
+  },
+  addCategoryModalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    color: '#1A2238',
+  },
+  addCategoryInput: {
+    width: '100%',
+    backgroundColor: '#F1F1F1',
+    padding: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ABB2B9',
+    marginBottom: 20,
+    color: '#1A2238',
+  },
+  addCategoryModalButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  addCategorySolidButton: {
+    backgroundColor: '#3BCEAC',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+  },
+  addCategorySolidButtonText: {
+    color: '#1A2238',
+    fontWeight: 'bold',
+  },
+  addCategoryCancelButton: {
+    backgroundColor: '#E74C3C',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    marginLeft: 10,
+  },
+  addCategoryCancelButtonText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+  },
+
+  // Existing styles for the product modal:
   modalBackground: {
     flex: 1,
     justifyContent: 'center',
@@ -445,5 +605,38 @@ const styles = StyleSheet.create({
   finishButtonText: {
     color: 'white',
     fontWeight: 'bold',
+  },
+
+  // New styles for the Success Modal when adding a category
+  categorySuccessModalBackground: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Same background as other modals
+  },
+  categorySuccessModalContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    padding: 20,
+    width: '80%',
+    alignItems: 'center',
+  },
+  categorySuccessModalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginTop: 10,
+    marginBottom: 10,
+    color: '#1A2238',
+  },
+  categorySuccessModalMessage: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 20,
+    color: '#1A2238',
+  },
+  categorySuccessButtonContainer: {
+    justifyContent: 'center',
+    width: '100%',
+    alignItems: 'center',
   },
 });
