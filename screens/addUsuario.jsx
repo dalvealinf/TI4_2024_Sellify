@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
 =======
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
-import { Switch } from 'react-native-paper';  // Usamos react-native-paper para el Switch
+import { Switch } from 'react-native-paper';
 
 export default function AddUserScreen({ navigation }) {
   const [name, setName] = useState('');
@@ -212,9 +212,8 @@ export default function AddUserScreen({ navigation }) {
         correo: email,
         contrasena: password,
         telefono: phone,
-        // Los siguientes valores solo se usan como frontend
-        role: role, 
-        isActive: isActive,
+        tipo_usuario: role,
+        estado: isActive ? 'activo' : 'inactivo'
       };
 
       try {
@@ -226,12 +225,16 @@ export default function AddUserScreen({ navigation }) {
           body: JSON.stringify(userData),
         };
 
-        await fetch('http://170.239.85.88:5000/register', options);
-        
+        const response = await fetch('http://170.239.85.88:5000/register', options);
+
+        if (!response.ok) {
+          throw new Error('Error en el registro');
+        }
+
         // Mostrar mensaje genérico de acción realizada
-        Alert.alert('Acción realizada', 'La acción fue completada exitosamente.');
+        Alert.alert('Registro exitoso', 'El usuario fue registrado exitosamente.');
       } catch (error) {
-        Alert.alert('Acción realizada', 'La acción fue completada exitosamente.');
+        Alert.alert('Error', 'No se pudo registrar el usuario. Por favor, intenta nuevamente.');
       } finally {
         setLoading(false);
       }
@@ -247,7 +250,6 @@ export default function AddUserScreen({ navigation }) {
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
             <Icon name="arrow-left" size={20} color="white" />
           </TouchableOpacity>
-          
           <Text style={styles.backButtonText}>Gestión de Usuarios</Text>
         </View>
 

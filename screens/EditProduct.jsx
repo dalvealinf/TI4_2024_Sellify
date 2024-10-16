@@ -54,6 +54,7 @@ export default function EditProduct({ route, navigation }) {
     return !isNaN(date.getTime()) ? date : new Date(); // Use current date if invalid
   };
 
+  // States for product data
   const [nombre, setNombre] = useState((product.nombre) || '');
   const [categoria, setCategoria] = useState((product.categoria) || 'Lacteos');
   const [precio, setPrecio] = useState((product.precio_venta) || '');
@@ -63,6 +64,9 @@ export default function EditProduct({ route, navigation }) {
   const [fechaVencimiento, setFechaVencimiento] = useState(validateDate(product.fecha_vencimiento));
   const [barcode, setBarcode] = useState((product.codigo_barras) || '');
   const [description, setDescription] = useState((product.descripcion) || '');
+
+  // State to manage product status (estado)
+  const [isActive, setIsActive] = useState(product.estado_producto === 'activo'); // True if active, False if inactive
 
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const [categories, setCategories] = useState([]);
@@ -74,7 +78,6 @@ export default function EditProduct({ route, navigation }) {
   const [showFechaVencimientoPicker, setShowFechaVencimientoPicker] = useState(false);
 
   const [modalVisible, setModalVisible] = useState(false);
-  const [addAgainModalVisible, setAddAgainModalVisible] = useState(false);
   const [errorModalVisible, setErrorModalVisible] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -153,7 +156,7 @@ export default function EditProduct({ route, navigation }) {
       stock: parseInt(stock),
       descuento: descuento ? parseFloat(descuento) : 0,
       precio_venta: parseFloat(precio),
-      estado: "activo", 
+      estado: isActive ? 'activo' : 'inactivo', // Estado based on the toggle
       categoria,
     };
 
@@ -181,6 +184,7 @@ export default function EditProduct({ route, navigation }) {
     }
   };
 
+<<<<<<< HEAD
   // Function to add the product again with new data via the API
   const handleAddAgain = async () => {
     const newProduct = {
@@ -220,13 +224,10 @@ export default function EditProduct({ route, navigation }) {
 >>>>>>> dev
   };
 
+=======
+>>>>>>> Dev
   const closeEditModal = () => {
     setModalVisible(false);
-    navigation.goBack();
-  };
-
-  const closeAddAgainModal = () => {
-    setAddAgainModalVisible(false);
     navigation.goBack();
   };
 
@@ -421,23 +422,6 @@ export default function EditProduct({ route, navigation }) {
         <Modal
           animationType="slide"
           transparent={true}
-          visible={addAgainModalVisible}
-          onRequestClose={closeAddAgainModal}
-        >
-          <View style={styles.modalBackground}>
-            <View style={styles.modalContainer}>
-              <Icon name="check-circle" size={60} color="#4caf50" />
-              <Text style={styles.modalTitle}>¡Producto Agregado de Nuevo!</Text>
-              <TouchableOpacity onPress={closeAddAgainModal} style={styles.finishButton}>
-                <Text style={styles.finishButtonText}>Regresar</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
-
-        <Modal
-          animationType="slide"
-          transparent={true}
           visible={errorModalVisible}
           onRequestClose={() => setErrorModalVisible(false)}
         >
@@ -505,6 +489,23 @@ export default function EditProduct({ route, navigation }) {
             </ScrollView>
           </View>
         )}
+
+        <Text style={styles.label}>Estado del Producto</Text>
+        <View style={styles.switchContainer}>
+          <TouchableOpacity
+            style={[styles.toggleButton, isActive ? styles.activeButton : styles.inactiveButton]}
+            onPress={() => setIsActive(true)}
+          >
+            <Text style={[styles.toggleText, isActive ? styles.activeText : styles.inactiveText]}>Activo</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.toggleButton, !isActive ? styles.activeButton : styles.inactiveButton]}
+            onPress={() => setIsActive(false)}
+          >
+            <Text style={[styles.toggleText, !isActive ? styles.activeText : styles.inactiveText]}>Inactivo</Text>
+          </TouchableOpacity>
+        </View>
 
         <Text style={styles.label}>Descripción</Text>
         <TextInput
@@ -589,10 +590,6 @@ export default function EditProduct({ route, navigation }) {
 
         <TouchableOpacity style={styles.solidButton} onPress={handleEditProduct}>
           <Text style={styles.solidButtonText}>Guardar Cambios</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.secondaryButton} onPress={handleAddAgain}>
-          <Text style={styles.secondaryButtonText}>Agregar Con Nuevos Datos</Text>
         </TouchableOpacity>
       </ScrollView>
     </TouchableWithoutFeedback>
@@ -813,18 +810,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
   },
-  secondaryButton: {
-    marginTop: 10,
-    borderRadius: 10,
-    backgroundColor: '#FF6B6B',
-    paddingVertical: 15,
-    alignItems: 'center',
-  },
-  secondaryButtonText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
   modalBackground: {
     flex: 1,
     justifyContent: 'center',
@@ -859,5 +844,41 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
   },
+<<<<<<< HEAD
 });
 >>>>>>> dev
+=======
+  switchContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 15,
+  },
+  toggleButton: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    marginHorizontal: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+  },
+  activeButton: {
+    backgroundColor: '#3BCEAC', // Same color as the solid buttons
+    borderColor: '#3BCEAC',
+  },
+  inactiveButton: {
+    backgroundColor: 'transparent', // No fill for the inactive button
+    borderColor: '#3BCEAC', // Use the same border color
+  },
+  toggleText: {
+    fontWeight: 'bold',
+  },
+  activeText: {
+    color: '#1A2238', // Dark color for the active state
+  },
+  inactiveText: {
+    color: '#ABB2B9', // Light color for the inactive state
+  },
+});
+>>>>>>> Dev
