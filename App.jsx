@@ -13,6 +13,7 @@ import AddUser from './screens/addUsuario';
 import InventoryScreen from './screens/GestionInventario';
 import EditProduct from './screens/EditProduct';
 import ProfileScreen from './screens/Profile';
+import EditUser from './screens/EditUser';
 import AddProductAgain from './screens/addProductAgain';
 
 
@@ -33,6 +34,7 @@ export default function App() {
         <Stack.Screen name="InventoryScreen" component={InventoryScreen} />
         <Stack.Screen name="EditProduct" component={EditProduct} />
         <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
+        <Stack.Screen name="EditUser" component={EditUser} />
         <Stack.Screen name="AddProductAgain" component={AddProductAgain} />
       </Stack.Navigator>
     </NavigationContainer>

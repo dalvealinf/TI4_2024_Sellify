@@ -42,6 +42,7 @@ export default function InventoryScreen({ route }) {
         .map(product => {
           const fechaRegistroValida = product.fecha_registro ? new Date(product.fecha_registro) : null;
           const fechaVencimientoValida = product.fecha_vencimiento ? new Date(product.fecha_vencimiento) : null;
+          const fechaFinDescuentoValida = product.vencimiento_descuento ? new Date(product.vencimiento_descuento) : null;
 
           return {
             ...product,
@@ -51,6 +52,9 @@ export default function InventoryScreen({ route }) {
             fecha_vencimiento: fechaVencimientoValida && !isNaN(fechaVencimientoValida)
               ? fechaVencimientoValida.toISOString().split('T')[0]
               : 'Fecha inválida',
+            vencimiento_descuento: fechaFinDescuentoValida && !isNaN(fechaFinDescuentoValida) // Format the discount end date
+              ? fechaFinDescuentoValida.toISOString().split('T')[0]
+              : 'Sin descuento',
           };
         });
 
@@ -174,6 +178,7 @@ export default function InventoryScreen({ route }) {
                     <Text style={styles.additionalText}>Estado: {product.estado_producto}</Text>
                     <Text style={styles.additionalText}>Stock: {product.stock}</Text>
                     <Text style={styles.additionalText}>Descuento: {product.descuento}%</Text>
+                    <Text style={styles.additionalText}>Fin del descuento: {product.vencimiento_descuento}</Text>
                     <Text style={styles.additionalText}>Categoría: {product.categoria}</Text>
                     <Text style={styles.additionalText}>Fecha de compra: {product.fecha_registro}</Text>
                     <Text style={styles.additionalText}>Fecha de vencimiento: {product.fecha_vencimiento}</Text>

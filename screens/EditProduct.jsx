@@ -30,6 +30,7 @@ export default function EditProduct({ route, navigation }) {
   const [descuento, setDescuento] = useState((product.descuento) || '0');
   const [fechaCompra, setFechaCompra] = useState(validateDate(product.fecha_registro));
   const [fechaVencimiento, setFechaVencimiento] = useState(validateDate(product.fecha_vencimiento));
+  const [fechaFinDescuento, setFechaFinDescuento] = useState(new Date()); // Discount expiration date
   const [barcode, setBarcode] = useState((product.codigo_barras) || '');
   const [description, setDescription] = useState((product.descripcion) || '');
 
@@ -44,6 +45,7 @@ export default function EditProduct({ route, navigation }) {
 
   const [showFechaCompraPicker, setShowFechaCompraPicker] = useState(false);
   const [showFechaVencimientoPicker, setShowFechaVencimientoPicker] = useState(false);
+  const [showFechaFinDescuentoPicker, setShowFechaFinDescuentoPicker] = useState(false); // For discount expiration picker
 
   const [modalVisible, setModalVisible] = useState(false);
   const [errorModalVisible, setErrorModalVisible] = useState(false);
@@ -112,6 +114,10 @@ export default function EditProduct({ route, navigation }) {
       estado: isActive ? 'activo' : 'inactivo', // Estado based on the toggle
       categoria,
     };
+
+    if (parseFloat(descuento) > 0) {
+      updatedProduct.vencimiento_descuento = fechaFinDescuento.toISOString().split('T')[0]; // Discount expiration date
+    }
 
     try {
       const response = await fetch(`http://170.239.85.88:5000/product/barcode/${barcode}`, {
@@ -289,6 +295,27 @@ export default function EditProduct({ route, navigation }) {
           keyboardType="numeric"
         />
 
+        {/* Discount End Date Picker */}
+        {parseFloat(descuento) > 0 && (
+          <>
+            <Text style={styles.label}>Fecha de Fin del Descuento</Text>
+            <TouchableOpacity onPress={() => setShowFechaFinDescuentoPicker(true)} style={styles.input}>
+              <Text style={styles.dateText}>{fechaFinDescuento.toISOString().split('T')[0]}</Text>
+            </TouchableOpacity>
+            {showFechaFinDescuentoPicker && (
+              <DateTimePicker
+                value={fechaFinDescuento}
+                mode="date"
+                display="default"
+                onChange={(event, selectedDate) => {
+                  setShowFechaFinDescuentoPicker(false);
+                  if (selectedDate) setFechaFinDescuento(selectedDate);
+                }}
+              />
+            )}
+          </>
+        )}
+
         <Text style={styles.label}>Fecha de Compra</Text>
         <TouchableOpacity onPress={() => setShowFechaCompraPicker(true)} style={styles.input}>
           <Text style={styles.dateText}>{fechaCompra.toISOString().split('T')[0]}</Text>
@@ -378,7 +405,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     borderColor: '#3BCEAC',
     borderWidth: 1,
-    position: 'relative', // For dropdown alignment
+    position: 'relative',
     zIndex: 1,
   },
   dropdownContainer: {
@@ -386,7 +413,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderColor: '#3BCEAC',
     borderWidth: 1,
-    marginTop: -10, // Attach to input field seamlessly
+    marginTop: -10,
     overflow: 'hidden',
     position: 'relative',
     zIndex: 1,
@@ -477,20 +504,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   activeButton: {
-    backgroundColor: '#3BCEAC', // Same color as the solid buttons
+    backgroundColor: '#3BCEAC', 
     borderColor: '#3BCEAC',
   },
   inactiveButton: {
-    backgroundColor: 'transparent', // No fill for the inactive button
-    borderColor: '#3BCEAC', // Use the same border color
+    backgroundColor: 'transparent',
+    borderColor: '#3BCEAC',
   },
   toggleText: {
     fontWeight: 'bold',
   },
   activeText: {
-    color: '#1A2238', // Dark color for the active state
+    color: '#1A2238', 
   },
   inactiveText: {
-    color: '#ABB2B9', // Light color for the inactive state
+    color: '#ABB2B9', 
   },
 });

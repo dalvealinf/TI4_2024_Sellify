@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef  } from 'react';
 import {
   View,
   Text,
@@ -9,8 +9,11 @@ import {
   StyleSheet,
   TouchableWithoutFeedback,
   Keyboard,
+  Animated,
+  Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 export default function AddProduct({ navigation, route }) {
   const { scannedBarcode } = route.params || {};
@@ -21,11 +24,13 @@ export default function AddProduct({ navigation, route }) {
   const [descuento, setDescuento] = useState('0');
   const [fechaCompra, setFechaCompra] = useState(new Date());
   const [fechaVencimiento, setFechaVencimiento] = useState(new Date());
+  const [fechaFinDescuento, setFechaFinDescuento] = useState(new Date());
   const [barcode, setBarcode] = useState(scannedBarcode || '');
   const [description, setDescription] = useState('');
 
   const [showFechaCompraPicker, setShowFechaCompraPicker] = useState(false);
   const [showFechaVencimientoPicker, setShowFechaVencimientoPicker] = useState(false);
+  const [showFechaFinDescuentoPicker, setShowFechaFinDescuentoPicker] = useState(false);
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const [categories, setCategories] = useState([]);
   const [filteredCategories, setFilteredCategories] = useState([]);
@@ -36,6 +41,10 @@ export default function AddProduct({ navigation, route }) {
   const [addCategoryModalVisible, setAddCategoryModalVisible] = useState(false);
   const [categorySuccessModalVisible, setCategorySuccessModalVisible] = useState(false); // New success modal state
   const [newCategoryName, setNewCategoryName] = useState('');
+  const [showDiscountDatePicker, setShowDiscountDatePicker] = useState(false);
+ 
+
+  const fadeAnim = useRef(new Animated.Value(0)).current; 
 
   const fetchCategories = async () => {
     try {
@@ -53,17 +62,35 @@ export default function AddProduct({ navigation, route }) {
 
     const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
       if (dropdownVisible) {
-        toggleDropdown(); // Close dropdown on keyboard dismiss
+        toggleDropdown();  
       }
       if (!categoria) {
         setCategoria(customCategory || 'Escribe la categoría');
       }
     });
 
+
     return () => {
       keyboardDidHideListener.remove();
     };
   }, [dropdownVisible, categoria, customCategory]);
+
+  useEffect(() => {
+    // Show the discount date picker if discount is greater than 0, but don't auto-hide it on selection
+    if (parseFloat(descuento) > 0) {
+      Animated.timing(fadeAnim, {
+        toValue: 1, // Fade in
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      Animated.timing(fadeAnim, {
+        toValue: 0, // Fade out
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [descuento]);
 
   const toggleDropdown = () => {
     setDropdownVisible(!dropdownVisible);
@@ -109,10 +136,14 @@ export default function AddProduct({ navigation, route }) {
       stock: parseInt(stock),
       descuento: descuento ? parseFloat(descuento) : 0,
       precio_venta: parseFloat(precio),
-      estado: "activo", 
+      estado: "activo",
       categoria,
       codigo_barras: barcode,
     };
+
+    if (parseFloat(descuento) > 0) {
+      productData.vencimiento_descuento = fechaFinDescuento.toISOString().split('T')[0]; // Discount expiration date
+    }
 
     try {
       const response = await fetch('http://170.239.85.88:5000/product', {
@@ -347,6 +378,27 @@ export default function AddProduct({ navigation, route }) {
           placeholderTextColor="#ABB2B9"
           keyboardType="numeric"
         />
+         {/* Discount Expiration Date */}
+        {parseFloat(descuento) > 0 && (
+          <Animated.View style={{ opacity: fadeAnim }}>
+            <Text style={styles.label}>Fecha de Fin del Descuento</Text>
+            <TouchableOpacity onPress={() => setShowFechaFinDescuentoPicker(true)} style={styles.input}>
+              <Text style={styles.dateText}>{fechaFinDescuento.toISOString().split('T')[0]}</Text>
+            </TouchableOpacity>
+            {showFechaFinDescuentoPicker && (
+              <DateTimePicker
+                value={fechaFinDescuento}
+                mode="date"
+                display="default"
+                onChange={(event, selectedDate) => {
+                  setShowFechaFinDescuentoPicker(false);
+                  if (selectedDate) setFechaFinDescuento(selectedDate);
+                }}
+              />
+            )}
+          </Animated.View>
+        )}
+
 
         <Text style={styles.label}>Fecha de Compra</Text>
         <TouchableOpacity onPress={() => setShowFechaCompraPicker(true)} style={styles.input}>
@@ -499,7 +551,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 
-  // Styles for AddCategoryModal (isolated from other modals)
+  
   addCategoryModalBackground: {
     flex: 1,
     justifyContent: 'center',
@@ -556,7 +608,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 
-  // Existing styles for the product modal:
+
   modalBackground: {
     flex: 1,
     justifyContent: 'center',
@@ -607,12 +659,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 
-  // New styles for the Success Modal when adding a category
+ 
   categorySuccessModalBackground: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Same background as other modals
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', 
   },
   categorySuccessModalContainer: {
     backgroundColor: '#FFFFFF',
