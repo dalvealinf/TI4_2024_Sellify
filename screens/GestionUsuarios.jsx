@@ -1,42 +1,16 @@
-<<<<<<< HEAD
-import React, { useState, useEffect, useRef } from 'react';
-<<<<<<< HEAD
-import { Animated, View, Text, TextInput, Image, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
-import Icon from 'react-native-vector-icons/Feather';
-import { useNavigation } from '@react-navigation/native';
-
-const users = [
-  { id: 1, name: 'Alice Johnson', email: 'alice@example.com', role: 'Admin', avatar: require('../assets/avatar.jpg') },
-  { id: 2, name: 'Bob Smith', email: 'bob@example.com', role: 'User', avatar: require('../assets/avatar.jpg') },
-  { id: 3, name: 'Charlie Brown', email: 'charlie@example.com', role: 'Editor', avatar: require('../assets/avatar.jpg') },
-  { id: 4, name: 'Diana Ross', email: 'diana@example.com', role: 'User', avatar: require('../assets/avatar.jpg') },
-  { id: 5, name: 'Ethan Hunt', email: 'ethan@example.com', role: 'Admin', avatar: require('../assets/avatar.jpg') },
-];
-
-=======
-import { Animated, View, Text, TextInput, Image, TouchableOpacity, ScrollView, StyleSheet, Alert, ActivityIndicator } from 'react-native';
-=======
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Animated, View, Text, TextInput, Image, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
->>>>>>> Dev
 import Icon from 'react-native-vector-icons/Feather';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Menu, Divider, Provider } from 'react-native-paper';
 
->>>>>>> dev
 export default function UserManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedUser, setExpandedUser] = useState(null);
   const [menuVisible, setMenuVisible] = useState(null);
-<<<<<<< HEAD
-=======
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
-<<<<<<< HEAD
->>>>>>> dev
-=======
   const [error, setError] = useState(false);
->>>>>>> Dev
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const navigation = useNavigation();
 
@@ -46,19 +20,6 @@ export default function UserManagement() {
       duration: 1000,
       useNativeDriver: true,
     }).start();
-<<<<<<< HEAD
-<<<<<<< HEAD
-  }, [fadeAnim]);
-
-  const filteredUsers = users.filter(user =>
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
-=======
-
-    // Obtener datos de la API
-    fetchUsersFromAPI();
-=======
->>>>>>> Dev
   }, [fadeAnim]);
 
   // Llamada a la API
@@ -78,12 +39,6 @@ export default function UserManagement() {
     }
   };
 
-<<<<<<< HEAD
-  const filteredUsers = users.filter(user =>
-    user.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.correo.toLowerCase().includes(searchTerm.toLowerCase())
->>>>>>> dev
-=======
   // useFocusEffect se ejecuta cada vez que la pantalla se enfoca
   useFocusEffect(
     useCallback(() => {
@@ -92,7 +47,6 @@ export default function UserManagement() {
       // Cuando la pantalla esté en foco, hacer la solicitud a la API
       fetchUsersFromAPI();
     }, [])
->>>>>>> Dev
   );
 
   const filteredUsers = users.filter(user => {
@@ -144,71 +98,6 @@ export default function UserManagement() {
             />
           </View>
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-      <ScrollView>
-        {filteredUsers.map((user) => (
-          <View key={user.id} style={styles.userCard}>
-            <View style={styles.userInfo}>
-              <Image
-                source={user.avatar}
-                style={styles.avatar}
-              />
-              <View>
-                <Text style={styles.userName}>{user.name}</Text>
-                <Text style={styles.userEmail}>{user.email}</Text>
-              </View>
-            </View>
-
-            <View style={styles.userActions}>
-              <Text style={styles.roleBadge}>{user.role}</Text>
-
-              <TouchableOpacity
-                style={styles.moreButton}
-                onPress={() => setMenuVisible(menuVisible === user.id ? null : user.id)}
-              >
-                <Icon name="more-vertical" size={20} color="white" />
-              </TouchableOpacity>
-
-              {menuVisible === user.id && (
-                <View style={styles.dropdownMenu}>
-                  <TouchableOpacity style={styles.menuItem}>
-                    <Icon name="edit" size={16} color="white" />
-                    <Text style={styles.menuText}>Editar</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.menuItem}>
-                    <Icon name="trash" size={16} color="white" />
-                    <Text style={styles.menuText}>Eliminar</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-
-              <TouchableOpacity
-                onPress={() => setExpandedUser(expandedUser === user.id ? null : user.id)}
-                style={styles.expandButton}
-              >
-                <Icon name="chevron-down" size={20} color="white" />
-              </TouchableOpacity>
-            </View>
-
-            {expandedUser === user.id && (
-              <View style={styles.additionalInfo}>
-                <Text style={styles.additionalText}>Rol: {user.role}</Text>
-                <Text style={styles.additionalText}>Último acceso: Hace 2 días</Text>
-                <Text style={styles.additionalText}>Estado de la cuenta: Activo</Text>
-                <Text style={styles.additionalText}>Ventas realizadas: $3.421.221</Text>
-              </View>
-            )}
-          </View>
-        ))}
-      </ScrollView>
-=======
-      {/* Mostrar el indicador de carga */}
-      {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#00ff00" />
-          <Text style={styles.loadingText}>Cargando usuarios...</Text>
-=======
           {/* Redirección al añadir usuario */}
           <TouchableOpacity 
             style={styles.addButton}
@@ -217,7 +106,6 @@ export default function UserManagement() {
             <Icon name="user-plus" size={20} />
             <Text style={styles.addButtonText}>Añadir</Text>
           </TouchableOpacity>
->>>>>>> Dev
         </View>
 
         {/* Mostrar el indicador de carga */}
@@ -289,28 +177,11 @@ export default function UserManagement() {
                   </View>
                 )}
               </View>
-<<<<<<< HEAD
-
-              {expandedUser === user.id_usuario && (
-                <View style={styles.additionalInfo}>
-                  <Text style={styles.additionalText}>Correo: {user.correo}</Text>
-                  <Text style={styles.additionalText}>Teléfono: {user.telefono}</Text>
-                  <Text style={styles.additionalText}>RUT: {user.rut}</Text>
-                </View>
-              )}
-            </View>
-          ))}
-        </ScrollView>
-      )}
->>>>>>> dev
-    </View>
-=======
             ))}
           </ScrollView>
         )}
       </View>
     </Provider>
->>>>>>> Dev
   );
 }
 
@@ -432,34 +303,6 @@ const styles = StyleSheet.create({
     color: '#ccc',
     marginBottom: 4,
   },
-<<<<<<< HEAD
-  dropdownMenu: {
-    position: 'absolute',
-    right: 0,
-    top: 40,
-    backgroundColor: '#333',
-    borderRadius: 8,
-    padding: 8,
-    zIndex: 1000,
-    elevation: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.8,
-    shadowRadius: 2,
-  },
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 8,
-  },
-  menuText: {
-    color: 'white',
-    marginLeft: 8,
-  },
-<<<<<<< HEAD
-=======
-=======
->>>>>>> Dev
   loadingContainer: {
     flexDirection: 'column',
     justifyContent: 'center',
@@ -471,12 +314,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#ffffff',
   },
-<<<<<<< HEAD
->>>>>>> dev
-=======
   errorText: {
     color: 'red',
     fontSize: 16,
   },
->>>>>>> Dev
 });

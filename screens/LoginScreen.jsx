@@ -63,9 +63,9 @@ export default function Login() {
         } else {
           await AsyncStorage.removeItem('credentials');
         }
-
+      
         await AsyncStorage.setItem('token', data.access_token);
-        navigation.navigate('Home');
+        navigation.replace('Home');  // Asegúrate de que 'Profile' sea la ruta correcta
       } else {
         setError(data.msg || 'Usuario o contraseña incorrectos');
       }
@@ -289,8 +289,4 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-<<<<<<< HEAD
 });
-=======
-});
->>>>>>> dev

@@ -1,52 +1,3 @@
-<<<<<<< HEAD
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
-import Icon from 'react-native-vector-icons/Feather';
-import { useNavigation } from '@react-navigation/native';
-
-const products = [
-  {
-    id: 1,
-    name: 'Leche',
-    categoria: 'Lácteos',
-    precio: '2500',
-    stock: '50',
-    descuento: '10',
-    fechaCompra: '2024-09-15',
-    fechaVencimiento: '2025-09-15',
-    barcode: '1234567890123',
-    description: 'Leche.',
-  },
-  {
-    id: 2,
-    name: 'Carne de Res',
-    categoria: 'Carnes',
-    precio: '5500',
-    stock: '20',
-    descuento: '5',
-    fechaCompra: '2024-08-10',
-    fechaVencimiento: '2024-12-10',
-    barcode: '1234567890456',
-    description: 'Carne.',
-  },
-  {
-    id: 3,
-    name: 'Coca-Cola',
-    categoria: 'Bebidas',
-    precio: '2000',
-    stock: '100',
-    descuento: '0',
-    fechaCompra: '2024-09-15',
-    fechaVencimiento: '2025-09-15',
-    barcode: '7806500172116',
-    description: 'Bebida gaseosa.',
-  },
-];
-
-export default function InventoryScreen({route}) {
-  const [searchTerm, setSearchTerm] = useState('');
-  const navigation = useNavigation();
-=======
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator, Modal } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
@@ -65,28 +16,14 @@ export default function InventoryScreen({ route }) {
   const [isSuccess, setIsSuccess] = useState(true); // Differentiate between success and error
   const navigation = useNavigation();
 
-<<<<<<< HEAD
-  // Set search term if coming from searchBarcode
->>>>>>> dev
-=======
 
->>>>>>> Dev
   useEffect(() => {
     if (route.params?.searchBarcode) {
       setSearchTerm(route.params.searchBarcode);
     }
   }, [route.params?.searchBarcode]);
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  const filteredProducts = products.filter(product =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.barcode.includes(searchTerm)
-=======
-  // Fetch products on screen focus (when returning from edit page)
-=======
 
->>>>>>> Dev
   useFocusEffect(
     useCallback(() => {
       fetchProducts(); 
@@ -177,7 +114,6 @@ export default function InventoryScreen({ route }) {
   const filteredProducts = products.filter(product =>
     product.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
     product.codigo_barras.includes(searchTerm)
->>>>>>> dev
   );
 
   return (
@@ -212,34 +148,6 @@ export default function InventoryScreen({ route }) {
         </View>
       </View>
 
-<<<<<<< HEAD
-      <ScrollView>
-        {filteredProducts.map((product) => (
-          <View key={product.id} style={styles.productCard}>
-            <View style={styles.productInfo}>
-              <Text style={styles.productName}>{product.name}</Text>
-              <Text style={styles.productDetails}>Código: {product.barcode}</Text>
-              <Text style={styles.productDetails}>precio: {product.precio}</Text>
-              <Text style={styles.productDetails}>Stock: {product.stock}</Text>
-              <Text style={styles.productDetails}>Descuento: {product.descuento}%</Text>
-              <Text style={styles.productDetails}>Categoría: {product.categoria}</Text>
-              <Text style={styles.productDetails}>Fecha de compra: {product.fechaCompra}</Text>
-              <Text style={styles.productDetails}>Fecha de vencimiento: {product.fechaVencimiento}</Text>
-              <Text style={styles.productDetails}>Descripción: {product.description}</Text>
-
-            </View>
-
-            <TouchableOpacity
-              style={styles.editButton}
-              onPress={() => navigation.navigate('EditProduct', { product: product })}
-            >
-              <Icon name="edit" size={20} color="black" />
-              <Text style={styles.editButtonText}>Editar</Text>
-            </TouchableOpacity>
-          </View>
-        ))}
-      </ScrollView>
-=======
       {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#3BCEAC" />
@@ -311,9 +219,6 @@ export default function InventoryScreen({ route }) {
           <Text style={styles.noDataText}>No existe ningún producto actualmente.</Text>
         </View>
       )}
-<<<<<<< HEAD
->>>>>>> dev
-=======
 
 
       <Modal
@@ -357,7 +262,6 @@ export default function InventoryScreen({ route }) {
           </View>
         </View>
       </Modal>
->>>>>>> Dev
     </View>
   );
 }
@@ -422,13 +326,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 8,
     marginBottom: 12,
-<<<<<<< HEAD
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-=======
     position: 'relative',
->>>>>>> dev
   },
   productInfo: {
     flex: 1,
@@ -441,8 +339,6 @@ const styles = StyleSheet.create({
   productDetails: {
     color: '#aaa',
   },
-<<<<<<< HEAD
-=======
   additionalInfo: {
     marginTop: 12,
     backgroundColor: '#1E2A38',
@@ -466,7 +362,6 @@ const styles = StyleSheet.create({
     marginTop: 15,
     justifyContent: 'space-between',
   },
->>>>>>> dev
   editButton: {
     backgroundColor: '#3BCEAC',
     paddingVertical: 8,
@@ -479,8 +374,6 @@ const styles = StyleSheet.create({
     color: '#1A2238',
     marginLeft: 3,
   },
-<<<<<<< HEAD
-=======
   deleteButton: {
     backgroundColor: '#FF6B6B',
     paddingVertical: 8,
@@ -524,10 +417,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
   },
-<<<<<<< HEAD
->>>>>>> dev
-});
-=======
   modalBackground: {
     flex: 1,
     justifyContent: 'center',
@@ -589,4 +478,3 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
->>>>>>> Dev

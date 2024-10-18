@@ -1,138 +1,169 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, TextInput, Image } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { Avatar } from 'react-native-elements';
+import { useNavigation } from '@react-navigation/native';
 
-export default function ProfileScreen({ navigation }) {
-  const [user, setUser] = useState({
-    name: "María García",
-    email: "maria.garcia@ejemplo.com",
-    role: "Gerente de Proyecto",
-    avatarUrl: "https://via.placeholder.com/100", // Enlace de avatar placeholder
-    isOnline: true,
-    lastLogin: "2023-10-15T14:30:00Z",
+export default function UserProfile() {
+  const [userData] = useState({
+    name: "Edward Contreras",
+    role: "Admin",
+    email: "Matyasgoman@gmail.com",
+    phone: "545431248",
+    creationDate: "17-10-2024"
   });
 
-  const handleLogout = () => {
-    // Implementar lógica de cierre de sesión aquí
-    Alert.alert("Cierre de sesión", "Has cerrado la sesión exitosamente", [
-      { text: "OK", onPress: () => navigation.replace('Login') }
-    ]);
-  };
+  const navigation = useNavigation();
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Image source={{ uri: user.avatarUrl }} style={styles.avatar} />
-        <View>
-          <Text style={styles.name}>{user.name}</Text>
-          <Text style={styles.role}>{user.role}</Text>
+    <LinearGradient
+      colors={['#1A202C', '#2D3748']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.gradientBackground}
+    >
+      <View style={styles.container}>
+        {/* Avatar Section */}
+        <View style={styles.avatarSection}>
+          <Avatar
+            size="xlarge"
+            rounded
+            source={{ uri: "https://placeimg.com/640/480/any" }} // Imagen por defecto
+            containerStyle={styles.avatar}
+          />
+          <TouchableOpacity style={styles.cameraButton}>
+            <Icon name="camera" size={20} color="white" />
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity style={styles.moreButton}>
-          <Icon name="dots-vertical" size={24} color="#000" />
-        </TouchableOpacity>
-      </View>
 
-      <View style={styles.infoContainer}>
-        <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>Correo:</Text>
-          <Text style={styles.infoText}>{user.email}</Text>
+        {/* Nombre y Role */}
+        <Text style={styles.nameText}>{userData.name}</Text>
+        <View style={styles.roleContainer}>
+          <Icon name="star" size={16} color="#48BB78" />
+          <Text style={styles.roleText}>{userData.role}</Text>
         </View>
 
-        <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>Estado:</Text>
-          <View style={styles.statusContainer}>
-            <View style={[styles.statusDot, { backgroundColor: user.isOnline ? 'green' : 'gray' }]} />
-            <Text style={styles.infoText}>{user.isOnline ? 'En línea' : 'Desconectado'}</Text>
+        {/* Información del usuario */}
+        <View style={styles.infoContainer}>
+          <View style={styles.infoRow}>
+            <Icon name="email" size={20} color="#48BB78" />
+            <Text style={styles.infoText}>{userData.email}</Text>
+          </View>
+
+          <View style={styles.infoRow}>
+            <Icon name="phone" size={20} color="#48BB78" />
+            <Text style={styles.infoText}>{userData.phone}</Text>
+          </View>
+
+          <View style={styles.infoRow}>
+            <Icon name="calendar" size={20} color="#48BB78" />
+            <Text style={styles.infoText}>{userData.creationDate}</Text>
           </View>
         </View>
 
-        <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>Último acceso:</Text>
-          <Text style={styles.infoText}>{new Date(user.lastLogin).toLocaleString()}</Text>
-        </View>
+        {/* Botón para volver a la página anterior */}
+        <TouchableOpacity
+          style={[styles.button, styles.backButton]}
+          onPress={() => navigation.goBack()}
+        >
+          <Icon name="arrow-left" size={18} color="white" />
+          <Text style={styles.buttonText}>Volver</Text>
+        </TouchableOpacity>
       </View>
-
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Icon name="logout" size={24} color="#FFFFFF" />
-        <Text style={styles.logoutText}>Cerrar sesión</Text>
-      </TouchableOpacity>
-    </View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  gradientBackground: {
     flex: 1,
-    padding: 20,
-    backgroundColor: '#F5F5F5',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-    padding: 20,
-    marginTop: 150, // Ajusta esta propiedad para bajar el contenido manualmente
-  },
-  avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-  },
-  name: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  role: {
-    fontSize: 16,
-    color: '#777',
-  },
-  moreButton: {
-    padding: 10,
-  },
-  infoContainer: {
-    backgroundColor: '#FFFFFF',
-    padding: 20,
-    borderRadius: 10,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-  },
-  infoLabel: {
-    fontWeight: 'bold',
-  },
-  infoText: {
-    color: '#777',
-  },
-  statusContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  statusDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginRight: 5,
-  },
-  logoutButton: {
-    backgroundColor: '#FF6B6B',
-    paddingVertical: 15,
-    borderRadius: 10,
-    flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  logoutText: {
-    marginLeft: 10,
-    color: '#FFFFFF',
-    fontSize: 16,
+  container: {
+    width: '85%',
+    backgroundColor: '#2D3748',
+    borderRadius: 20,
+    paddingVertical: '7%',
+    paddingHorizontal: '5%',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 6,
+  },
+  avatarSection: {
+    marginTop: -70,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  avatar: {
+    borderWidth: 4,
+    borderColor: 'white',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+  cameraButton: {
+    position: 'absolute',
+    bottom: 0,
+    right: -10,
+    backgroundColor: '#4A5568',
+    padding: 8,
+    borderRadius: 20,
+  },
+  nameText: {
+    fontSize: 28,
     fontWeight: 'bold',
+    color: '#48BB78',
+    marginTop: 10,
+    textAlign: 'center',
+  },
+  roleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 5,
+    justifyContent: 'center',
+  },
+  roleText: {
+    marginLeft: 5,
+    color: '#CBD5E0',
+    fontSize: 16,
+  },
+  infoContainer: {
+    width: '100%',
+    marginTop: 10,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+    paddingHorizontal: '5%',
+  },
+  infoText: {
+    marginLeft: 10,
+    fontSize: 16,
+    color: '#A0AEC0',
+    flex: 1,
+  },
+  button: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+    borderRadius: 10,
+    width: '50%',
+    marginTop: 25,
+  },
+  backButton: {
+    backgroundColor: '#48BB78',
+  },
+  buttonText: {
+    marginLeft: 5,
+    color: 'white',
+    fontSize: 16,
   },
 });
