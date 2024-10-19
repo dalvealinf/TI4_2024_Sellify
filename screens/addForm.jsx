@@ -14,6 +14,8 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import * as Notifications from 'expo-notifications';
+
 
 export default function AddProduct({ navigation, route }) {
   const { scannedBarcode } = route.params || {};
@@ -41,10 +43,48 @@ export default function AddProduct({ navigation, route }) {
   const [addCategoryModalVisible, setAddCategoryModalVisible] = useState(false);
   const [categorySuccessModalVisible, setCategorySuccessModalVisible] = useState(false); // New success modal state
   const [newCategoryName, setNewCategoryName] = useState('');
-  const [showDiscountDatePicker, setShowDiscountDatePicker] = useState(false);
- 
 
   const fadeAnim = useRef(new Animated.Value(0)).current; 
+  const dropdownFadeAnim = useRef(new Animated.Value(0)).current;
+
+  const scheduleExpirationNotifications = async (productName, expirationDate) => {
+    const oneWeekBefore = new Date(expirationDate);
+    oneWeekBefore.setDate(oneWeekBefore.getDate() - 7);
+    oneWeekBefore.setHours(9, 0, 0, 0); 
+  
+    const threeDaysBefore = new Date(expirationDate);
+    threeDaysBefore.setDate(threeDaysBefore.getDate() - 3);
+    threeDaysBefore.setHours(9, 0, 0, 0); 
+  
+    const oneDayBefore = new Date(expirationDate);
+    oneDayBefore.setDate(oneDayBefore.getDate() - 1);
+    oneDayBefore.setHours(9, 0, 0, 0); 
+  
+    const expirationDay = new Date(expirationDate);
+    expirationDay.setHours(9, 0, 0, 0); 
+    
+    console.log(oneWeekBefore, threeDaysBefore, oneDayBefore, expirationDay);
+
+    const scheduleNotification = async (date, message) => {
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: 'Recordatorio de Vencimiento de Producto',
+          body: message,
+          sound: true,
+          priority: Notifications.AndroidNotificationPriority.HIGH,
+        },
+        trigger: {
+          date,
+        },
+      });
+    };
+  
+    // Schedule notifications
+    await scheduleNotification(oneWeekBefore, `Recordatorio: ${productName} vence en una semana`);
+    await scheduleNotification(threeDaysBefore, `Recordatorio: ${productName} vence en 3 días.`);
+    await scheduleNotification(oneDayBefore, `Recordatorio: ${productName} vence mañana.`);
+    await scheduleNotification(expirationDay, `Recordatorio: ${productName} vence hoy.`);
+  };
 
   const fetchCategories = async () => {
     try {
@@ -76,16 +116,15 @@ export default function AddProduct({ navigation, route }) {
   }, [dropdownVisible, categoria, customCategory]);
 
   useEffect(() => {
-    // Show the discount date picker if discount is greater than 0, but don't auto-hide it on selection
     if (parseFloat(descuento) > 0) {
       Animated.timing(fadeAnim, {
-        toValue: 1, // Fade in
+        toValue: 1,
         duration: 300,
         useNativeDriver: true,
       }).start();
     } else {
       Animated.timing(fadeAnim, {
-        toValue: 0, // Fade out
+        toValue: 0, 
         duration: 300,
         useNativeDriver: true,
       }).start();
@@ -93,9 +132,21 @@ export default function AddProduct({ navigation, route }) {
   }, [descuento]);
 
   const toggleDropdown = () => {
-    setDropdownVisible(!dropdownVisible);
+    if (dropdownVisible) {
+      Animated.timing(dropdownFadeAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start(() => setDropdownVisible(false));
+    } else {
+      setDropdownVisible(true);
+      Animated.timing(dropdownFadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    }
   };
-
   const handleSearch = (query) => {
     setSearchQuery(query);
     const filtered = categories.filter(category =>
@@ -118,17 +169,17 @@ export default function AddProduct({ navigation, route }) {
       Alert.alert('Error', 'Por favor complete todos los campos obligatorios.');
       return;
     }
-
+  
     if (isNaN(precio) || isNaN(stock)) {
       Alert.alert('Error', 'Precio y Stock deben ser valores numéricos.');
       return;
     }
-
+  
     if (barcode.length !== 13 || isNaN(barcode)) {
       Alert.alert('Error', 'El código de barras debe contener exactamente 13 dígitos.');
       return;
     }
-
+  
     const productData = {
       nombre,
       descripcion: description,
@@ -140,11 +191,11 @@ export default function AddProduct({ navigation, route }) {
       categoria,
       codigo_barras: barcode,
     };
-
+  
     if (parseFloat(descuento) > 0) {
-      productData.vencimiento_descuento = fechaFinDescuento.toISOString().split('T')[0]; // Discount expiration date
+      productData.vencimiento_descuento = fechaFinDescuento.toISOString().split('T')[0];
     }
-
+  
     try {
       const response = await fetch('http://170.239.85.88:5000/product', {
         method: 'POST',
@@ -153,11 +204,14 @@ export default function AddProduct({ navigation, route }) {
         },
         body: JSON.stringify(productData),
       });
-
+  
       const result = await response.json();
-
+  
       if (response.ok) {
         setModalVisible(true);
+  
+
+        await scheduleExpirationNotifications(nombre, fechaVencimiento);
       } else {
         Alert.alert('Error', result.msg || 'Hubo un error al agregar el producto');
       }
@@ -166,6 +220,7 @@ export default function AddProduct({ navigation, route }) {
       Alert.alert('Error', 'No se pudo conectar con el servidor');
     }
   };
+  
 
   const handleAddCategory = async () => {
     if (newCategoryName.trim() === '') {
@@ -231,7 +286,6 @@ export default function AddProduct({ navigation, route }) {
           </View>
         </Modal>
 
-        {/* Success Modal for Category Addition */}
         <Modal
           animationType="slide"
           transparent={true}
@@ -252,7 +306,6 @@ export default function AddProduct({ navigation, route }) {
           </View>
         </Modal>
 
-        {/* Modal for Add Category */}
         <Modal
           animationType="slide"
           transparent={true}
@@ -294,7 +347,7 @@ export default function AddProduct({ navigation, route }) {
           </TouchableOpacity>
         </View>
 
-        {/* Form Fields */}
+
         <Text style={styles.label}>Nombre</Text>
         <TextInput
           style={styles.input}
@@ -304,12 +357,13 @@ export default function AddProduct({ navigation, route }) {
           placeholderTextColor="#ABB2B9"
         />
 
-        <Text style={styles.label}>Categoría</Text>
+<Text style={styles.label}>Categoría</Text>
         <TouchableOpacity style={styles.input} onPress={toggleDropdown}>
           <Text style={styles.dropdownText}>{categoria || 'Escribe la categoría'}</Text>
         </TouchableOpacity>
+
         {dropdownVisible && (
-          <View style={styles.dropdownContainer}>
+          <Animated.View style={[styles.dropdownContainer, { opacity: dropdownFadeAnim }]}>
             <TextInput
               style={styles.searchInput}
               placeholder="Buscar categoría"
@@ -337,7 +391,7 @@ export default function AddProduct({ navigation, route }) {
                 </TouchableOpacity>
               ))}
             </ScrollView>
-          </View>
+          </Animated.View>
         )}
 
         <Text style={styles.label}>Descripción</Text>
@@ -378,7 +432,7 @@ export default function AddProduct({ navigation, route }) {
           placeholderTextColor="#ABB2B9"
           keyboardType="numeric"
         />
-         {/* Discount Expiration Date */}
+
         {parseFloat(descuento) > 0 && (
           <Animated.View style={{ opacity: fadeAnim }}>
             <Text style={styles.label}>Fecha de Fin del Descuento</Text>
