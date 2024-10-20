@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Animated, View, Text, TextInput, Image, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
+import { Animated, View, Text, TextInput, Image, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Menu, Divider, Provider } from 'react-native-paper';
@@ -67,10 +67,46 @@ export default function UserManagement() {
     navigation.navigate('EditUser', { userRut: rut }); // Asegúrate de enviar 'userRut' como prop a la ruta de edición
   };
 
-  const handleDeactivateUser = (rut) => {
-    // Lógica para desactivar al usuario (marcar como inactivo)
-    console.log(`Desactivar usuario con RUT: ${rut}`);
-    // Aquí puedes agregar la lógica para cambiar el estado a 'inactivo' usando una llamada a la API
+  const handleDeactivateUser = async (rut, estadoActual) => {
+    // Verificar si el estado actual del usuario ya es "inactivo"
+    if (estadoActual === 'inactivo') {
+      Alert.alert('Usuario ya inactivo', 'Este usuario ya está inactivo.');
+      return;
+    }
+  
+    // Mostrar alerta de confirmación
+    Alert.alert(
+      'Confirmar desactivación',
+      '¿Estás seguro de que deseas desactivar a este usuario?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Sí, desactivar',
+          onPress: async () => {
+            try {
+              const response = await fetch(`http://170.239.85.88:5000/users/${rut}`, {
+                method: 'DELETE',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+              });
+  
+              if (response.ok) {
+                Alert.alert('Usuario desactivado', 'El usuario ha sido desactivado exitosamente.');
+                // Refrescar la lista de usuarios después de la desactivación
+                fetchUsersFromAPI();
+              } else {
+                const errorData = await response.json();
+                Alert.alert('Error', errorData.message || 'Ocurrió un error al desactivar al usuario.');
+              }
+            } catch (error) {
+              Alert.alert('Error', 'No se pudo desactivar al usuario. Inténtalo nuevamente.');
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
   };
 
   return (
@@ -83,6 +119,13 @@ export default function UserManagement() {
           <Animated.View style={{ opacity: fadeAnim }}>
             <Text style={styles.header}>Gestión de Usuarios</Text>
           </Animated.View>
+          {/* Botón para ver usuarios inactivos */}
+  <TouchableOpacity 
+    style={styles.inactiveButton}
+    onPress={() => navigation.navigate('InactiveUsers')} // Navegar a la nueva pantalla
+  >
+    <Icon name="user-x" size={24} color="white" />
+  </TouchableOpacity>
         </View>
 
         {/* Cuadro de búsqueda */}
@@ -154,9 +197,9 @@ export default function UserManagement() {
                     />
                     <Divider />
                     <Menu.Item 
-                      onPress={() => handleDeactivateUser(user.rut)} 
-                      title="Dejar Inactivo" 
-                    />
+  onPress={() => handleDeactivateUser(user.rut, user.estado)} 
+  title="Dejar Inactivo" 
+/>
                   </Menu>
 
                   <TouchableOpacity
@@ -317,5 +360,12 @@ const styles = StyleSheet.create({
   errorText: {
     color: 'red',
     fontSize: 16,
+  },
+  inactiveButton: {
+    marginLeft: 'auto',
+    marginRight: 10,
+    backgroundColor: '#FF6B6B',
+    padding: 10,
+    borderRadius: 8,
   },
 });

@@ -1,34 +1,36 @@
-import React, { useState, useEffect, useRef  } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
-  ScrollView,
-  Modal,
   StyleSheet,
+  ScrollView,
+  Alert,
+  Modal,
   TouchableWithoutFeedback,
   Keyboard,
   Animated,
-  Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import * as Notifications from 'expo-notifications';
 
+export default function AddProductAgain({ navigation, route }) {
+    const validateDate = (dateString) => {
+        const date = new Date(dateString);
+        return !isNaN(date.getTime()) ? date : new Date(); // Use current date if invalid
+      };
 
-export default function AddProduct({ navigation, route }) {
-  const { scannedBarcode } = route.params || {};
-  const [nombre, setNombre] = useState('');
-  const [categoria, setCategoria] = useState('');
-  const [precio, setPrecio] = useState('');
-  const [stock, setStock] = useState('');
-  const [descuento, setDescuento] = useState('0');
-  const [fechaCompra, setFechaCompra] = useState(new Date());
-  const [fechaVencimiento, setFechaVencimiento] = useState(new Date());
+  const [nombre, setNombre] = useState((route.params.product.nombre) || '');
+  const [categoria, setCategoria] = useState((route.params.product.categoria) || 'Lacteos');
+  const [precio, setPrecio] = useState((route.params.product.precio_venta) || '');
+  const [stock, setStock] = useState(route.params.product.stock ? String(route.params.product.stock) : '');
+  const [descuento, setDescuento] = useState((route.params.product.descuento) || '0');
+  const [fechaCompra, setFechaCompra] = useState(validateDate(route.params.product.fecha_registro));
+  const [fechaVencimiento, setFechaVencimiento] = useState(validateDate(route.params.product.fecha_vencimiento));
   const [fechaFinDescuento, setFechaFinDescuento] = useState(new Date());
-  const [barcode, setBarcode] = useState(scannedBarcode || '');
-  const [description, setDescription] = useState('');
+  const [barcode, setBarcode] = useState((route.params.product.codigo_barras) || '');
+  const [description, setDescription] = useState((route.params.product.descripcion) || '');
 
   const [showFechaCompraPicker, setShowFechaCompraPicker] = useState(false);
   const [showFechaVencimientoPicker, setShowFechaVencimientoPicker] = useState(false);
@@ -40,75 +42,32 @@ export default function AddProduct({ navigation, route }) {
   const [customCategory, setCustomCategory] = useState('');
 
   const [modalVisible, setModalVisible] = useState(false);
-  const [addCategoryModalVisible, setAddCategoryModalVisible] = useState(false);
-  const [categorySuccessModalVisible, setCategorySuccessModalVisible] = useState(false); // New success modal state
-  const [newCategoryName, setNewCategoryName] = useState('');
-
-  const fadeAnim = useRef(new Animated.Value(0)).current; 
+  const fadeAnim = useRef(new Animated.Value(0)).current;
   const dropdownFadeAnim = useRef(new Animated.Value(0)).current;
 
-  const scheduleExpirationNotifications = async (productName, expirationDate) => {
-    const oneWeekBefore = new Date(expirationDate);
-    oneWeekBefore.setDate(oneWeekBefore.getDate() - 7);
-    oneWeekBefore.setHours(9, 0, 0, 0); 
-  
-    const threeDaysBefore = new Date(expirationDate);
-    threeDaysBefore.setDate(threeDaysBefore.getDate() - 3);
-    threeDaysBefore.setHours(9, 0, 0, 0); 
-  
-    const oneDayBefore = new Date(expirationDate);
-    oneDayBefore.setDate(oneDayBefore.getDate() - 1);
-    oneDayBefore.setHours(9, 0, 0, 0); 
-  
-    const expirationDay = new Date(expirationDate);
-    expirationDay.setHours(9, 0, 0, 0); 
-    
-    console.log(oneWeekBefore, threeDaysBefore, oneDayBefore, expirationDay);
-
-    const scheduleNotification = async (date, message) => {
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title: 'Recordatorio de Vencimiento de Producto',
-          body: message,
-          sound: true,
-          priority: Notifications.AndroidNotificationPriority.HIGH,
-        },
-        trigger: {
-          date,
-        },
-      });
-    };
-  
-    // Schedule notifications
-    await scheduleNotification(oneWeekBefore, `Recordatorio: ${productName} vence en una semana`);
-    await scheduleNotification(threeDaysBefore, `Recordatorio: ${productName} vence en 3 días.`);
-    await scheduleNotification(oneDayBefore, `Recordatorio: ${productName} vence mañana.`);
-    await scheduleNotification(expirationDay, `Recordatorio: ${productName} vence hoy.`);
-  };
-
-  const fetchCategories = async () => {
-    try {
-      const response = await fetch('http://170.239.85.88:5000/categories');
-      const result = await response.json();
-      setCategories(result);
-      setFilteredCategories(result);
-    } catch (error) {
-      console.error('Error fetching categories:', error);
-    }
-  };
-
   useEffect(() => {
+    async function fetchCategories() {
+      try {
+        const response = await fetch('http://170.239.85.88:5000/categories');
+        const result = await response.json();
+        setCategories(result);
+        setFilteredCategories(result);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+        Alert.alert('Error', 'No se pudo obtener las categorías');
+      }
+    }
+
     fetchCategories();
 
     const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
       if (dropdownVisible) {
-        toggleDropdown();  
+        toggleDropdown(); // Close dropdown on keyboard dismiss
       }
       if (!categoria) {
         setCategoria(customCategory || 'Escribe la categoría');
       }
     });
-
 
     return () => {
       keyboardDidHideListener.remove();
@@ -124,7 +83,7 @@ export default function AddProduct({ navigation, route }) {
       }).start();
     } else {
       Animated.timing(fadeAnim, {
-        toValue: 0, 
+        toValue: 0,
         duration: 300,
         useNativeDriver: true,
       }).start();
@@ -147,6 +106,7 @@ export default function AddProduct({ navigation, route }) {
       }).start();
     }
   };
+
   const handleSearch = (query) => {
     setSearchQuery(query);
     const filtered = categories.filter(category =>
@@ -169,17 +129,17 @@ export default function AddProduct({ navigation, route }) {
       Alert.alert('Error', 'Por favor complete todos los campos obligatorios.');
       return;
     }
-  
+
     if (isNaN(precio) || isNaN(stock)) {
       Alert.alert('Error', 'Precio y Stock deben ser valores numéricos.');
       return;
     }
-  
+
     if (barcode.length !== 13 || isNaN(barcode)) {
       Alert.alert('Error', 'El código de barras debe contener exactamente 13 dígitos.');
       return;
     }
-  
+
     const productData = {
       nombre,
       descripcion: description,
@@ -187,15 +147,11 @@ export default function AddProduct({ navigation, route }) {
       stock: parseInt(stock),
       descuento: descuento ? parseFloat(descuento) : 0,
       precio_venta: parseFloat(precio),
-      estado: "activo",
+      estado: "activo", 
       categoria,
       codigo_barras: barcode,
     };
-  
-    if (parseFloat(descuento) > 0) {
-      productData.vencimiento_descuento = fechaFinDescuento.toISOString().split('T')[0];
-    }
-  
+
     try {
       const response = await fetch('http://170.239.85.88:5000/product', {
         method: 'POST',
@@ -204,51 +160,16 @@ export default function AddProduct({ navigation, route }) {
         },
         body: JSON.stringify(productData),
       });
-  
+
       const result = await response.json();
-  
+
       if (response.ok) {
         setModalVisible(true);
-  
-
-        await scheduleExpirationNotifications(nombre, fechaVencimiento);
       } else {
         Alert.alert('Error', result.msg || 'Hubo un error al agregar el producto');
       }
     } catch (error) {
       console.error('Error al agregar producto:', error);
-      Alert.alert('Error', 'No se pudo conectar con el servidor');
-    }
-  };
-  
-
-  const handleAddCategory = async () => {
-    if (newCategoryName.trim() === '') {
-      Alert.alert('Error', 'El nombre de la categoría no puede estar vacío.');
-      return;
-    }
-
-    try {
-      const response = await fetch('http://170.239.85.88:5000/categories', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ nombre_categoria: newCategoryName }),
-      });
-
-      const result = await response.json();
-
-      if (response.ok) {
-        setAddCategoryModalVisible(false);
-        setCategorySuccessModalVisible(true); // Show success modal
-        setNewCategoryName(''); // Reset the input field after success
-        fetchCategories(); // Refresh categories after adding a new one
-      } else {
-        Alert.alert('Error', result.msg || 'Hubo un error al agregar la categoría');
-      }
-    } catch (error) {
-      console.error('Error al agregar categoría:', error);
       Alert.alert('Error', 'No se pudo conectar con el servidor');
     }
   };
@@ -261,8 +182,6 @@ export default function AddProduct({ navigation, route }) {
   return (
     <TouchableWithoutFeedback onPress={handleFieldPress}>
       <ScrollView contentContainerStyle={styles.container}>
-        
-        {/* Modal for Add Product */}
         <Modal
           animationType="slide"
           transparent={true}
@@ -286,67 +205,12 @@ export default function AddProduct({ navigation, route }) {
           </View>
         </Modal>
 
-        <Modal
-          animationType="slide"
-          transparent={true}
-          visible={categorySuccessModalVisible}
-          onRequestClose={() => setCategorySuccessModalVisible(false)}
-        >
-          <View style={styles.modalBackground}>
-            <View style={styles.modalContainer}>
-              <Icon name="check-circle" size={60} color="#4caf50" />
-              <Text style={styles.modalTitle}>¡Categoría Agregada!</Text>
-              <Text style={styles.modalMessage}>La nueva categoría ha sido agregada correctamente.</Text>
-              <View style={styles.modalButtonContainer}>
-                <TouchableOpacity onPress={() => { setCategorySuccessModalVisible(false); }} style={styles.finishButton}>
-                  <Text style={styles.finishButtonText}>Cerrar</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </Modal>
-
-        <Modal
-          animationType="slide"
-          transparent={true}
-          visible={addCategoryModalVisible}
-          onRequestClose={() => setAddCategoryModalVisible(false)}
-        >
-          <View style={styles.addCategoryModalBackground}> 
-            <View style={styles.addCategoryModalContainer}> 
-              <Text style={styles.addCategoryModalTitle}>Agregar Nueva Categoría</Text>
-              <TextInput
-                style={styles.addCategoryInput} 
-                value={newCategoryName}
-                onChangeText={setNewCategoryName}
-                placeholder="Nombre de la categoría"
-                placeholderTextColor="#ABB2B9"
-              />
-              <View style={styles.addCategoryModalButtonContainer}>
-                <TouchableOpacity onPress={handleAddCategory} style={styles.addCategorySolidButton}>
-                  <Text style={styles.addCategorySolidButtonText}>Agregar Categoría</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => setAddCategoryModalVisible(false)} style={styles.addCategoryCancelButton}>
-                  <Text style={styles.addCategoryCancelButtonText}>Cancelar</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </Modal>
-
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <Icon name="arrow-left" size={24} color="#FFFFFF" />
           </TouchableOpacity>
           <Text style={styles.title}>Agregar Producto</Text>
-          <TouchableOpacity
-            style={styles.addCategoryButton}
-            onPress={() => setAddCategoryModalVisible(true)}
-          >
-            <Text style={styles.addCategoryText}>Agregar Categoría</Text>
-          </TouchableOpacity>
         </View>
-
 
         <Text style={styles.label}>Nombre</Text>
         <TextInput
@@ -357,7 +221,7 @@ export default function AddProduct({ navigation, route }) {
           placeholderTextColor="#ABB2B9"
         />
 
-<Text style={styles.label}>Categoría</Text>
+        <Text style={styles.label}>Categoría</Text>
         <TouchableOpacity style={styles.input} onPress={toggleDropdown}>
           <Text style={styles.dropdownText}>{categoria || 'Escribe la categoría'}</Text>
         </TouchableOpacity>
@@ -453,7 +317,6 @@ export default function AddProduct({ navigation, route }) {
           </Animated.View>
         )}
 
-
         <Text style={styles.label}>Fecha de Compra</Text>
         <TouchableOpacity onPress={() => setShowFechaCompraPicker(true)} style={styles.input}>
           <Text style={styles.dateText}>{fechaCompra.toISOString().split('T')[0]}</Text>
@@ -514,7 +377,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     paddingVertical: 15,
     backgroundColor: '#2D3A59',
     borderRadius: 10,
@@ -522,27 +385,13 @@ const styles = StyleSheet.create({
     marginHorizontal: 5,
   },
   backButton: {
-    marginLeft: 8,
-  },
-  addCategoryButton: {
     position: 'absolute',
-    right: 15,
-    backgroundColor: '#3BCEAC',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 10,
-  },
-  addCategoryText: {
-    color: '#1A2238',
-    fontWeight: 'bold',
+    left: 15,
   },
   title: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: 'bold',
-    color: 'white',
-    textAlign: 'left',
-    flex: 1, 
-    marginLeft: 1,
+    color: '#FFFFFF',
   },
   label: {
     color: '#FFFFFF',
@@ -557,6 +406,8 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     borderColor: '#3BCEAC',
     borderWidth: 1,
+    position: 'relative',
+    zIndex: 1,
   },
   dropdownContainer: {
     backgroundColor: '#2D3A59',
@@ -604,65 +455,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
   },
-
-  
-  addCategoryModalBackground: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  addCategoryModalContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 10,
-    padding: 20,
-    width: '80%',
-    alignItems: 'center',
-  },
-  addCategoryModalTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    color: '#1A2238',
-  },
-  addCategoryInput: {
-    width: '100%',
-    backgroundColor: '#F1F1F1',
-    padding: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ABB2B9',
-    marginBottom: 20,
-    color: '#1A2238',
-  },
-  addCategoryModalButtonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-  },
-  addCategorySolidButton: {
-    backgroundColor: '#3BCEAC',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 5,
-  },
-  addCategorySolidButtonText: {
-    color: '#1A2238',
-    fontWeight: 'bold',
-  },
-  addCategoryCancelButton: {
-    backgroundColor: '#E74C3C',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 5,
-    marginLeft: 10,
-  },
-  addCategoryCancelButtonText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-  },
-
-
   modalBackground: {
     flex: 1,
     justifyContent: 'center',
@@ -711,38 +503,5 @@ const styles = StyleSheet.create({
   finishButtonText: {
     color: 'white',
     fontWeight: 'bold',
-  },
-
- 
-  categorySuccessModalBackground: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', 
-  },
-  categorySuccessModalContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 10,
-    padding: 20,
-    width: '80%',
-    alignItems: 'center',
-  },
-  categorySuccessModalTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginTop: 10,
-    marginBottom: 10,
-    color: '#1A2238',
-  },
-  categorySuccessModalMessage: {
-    fontSize: 16,
-    textAlign: 'center',
-    marginBottom: 20,
-    color: '#1A2238',
-  },
-  categorySuccessButtonContainer: {
-    justifyContent: 'center',
-    width: '100%',
-    alignItems: 'center',
   },
 });

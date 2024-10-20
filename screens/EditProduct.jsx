@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Modal,
   TouchableWithoutFeedback,
   Keyboard,
+  Animated,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -16,10 +17,9 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 export default function EditProduct({ route, navigation }) {
   const { product } = route.params;
 
-  // Helper function to validate dates
   const validateDate = (dateString) => {
     const date = new Date(dateString);
-    return !isNaN(date.getTime()) ? date : new Date(); // Use current date if invalid
+    return !isNaN(date.getTime()) ? date : new Date();
   };
 
   const [nombre, setNombre] = useState((product.nombre) || '');
@@ -29,8 +29,12 @@ export default function EditProduct({ route, navigation }) {
   const [descuento, setDescuento] = useState((product.descuento) || '0');
   const [fechaCompra, setFechaCompra] = useState(validateDate(product.fecha_registro));
   const [fechaVencimiento, setFechaVencimiento] = useState(validateDate(product.fecha_vencimiento));
+  const [fechaFinDescuento, setFechaFinDescuento] = useState(new Date());
   const [barcode, setBarcode] = useState((product.codigo_barras) || '');
   const [description, setDescription] = useState((product.descripcion) || '');
+
+
+  const [isActive, setIsActive] = useState(product.estado_producto === 'activo');
 
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const [categories, setCategories] = useState([]);
@@ -40,11 +44,14 @@ export default function EditProduct({ route, navigation }) {
 
   const [showFechaCompraPicker, setShowFechaCompraPicker] = useState(false);
   const [showFechaVencimientoPicker, setShowFechaVencimientoPicker] = useState(false);
+  const [showFechaFinDescuentoPicker, setShowFechaFinDescuentoPicker] = useState(false); 
 
   const [modalVisible, setModalVisible] = useState(false);
-  const [addAgainModalVisible, setAddAgainModalVisible] = useState(false);
   const [errorModalVisible, setErrorModalVisible] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const dropdownFadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     async function fetchCategories() {
@@ -76,8 +83,37 @@ export default function EditProduct({ route, navigation }) {
     };
   }, [dropdownVisible, categoria, customCategory]);
 
+  useEffect(() => {
+    if (parseFloat(descuento) > 0) {
+      Animated.timing(fadeAnim, {
+        toValue: 1, 
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      Animated.timing(fadeAnim, {
+        toValue: 0, 
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [descuento]);
+
   const toggleDropdown = () => {
-    setDropdownVisible(!dropdownVisible);
+    if (dropdownVisible) {
+      Animated.timing(dropdownFadeAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start(() => setDropdownVisible(false));
+    } else {
+      setDropdownVisible(true);
+      Animated.timing(dropdownFadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    }
   };
 
   const handleSearch = (query) => {
@@ -97,7 +133,6 @@ export default function EditProduct({ route, navigation }) {
     }
   };
 
-  // Function to edit the product via the API
   const handleEditProduct = async () => {
     const updatedProduct = {
       nombre: nombre,
@@ -106,9 +141,13 @@ export default function EditProduct({ route, navigation }) {
       stock: parseInt(stock),
       descuento: descuento ? parseFloat(descuento) : 0,
       precio_venta: parseFloat(precio),
-      estado: "activo", 
+      estado: isActive ? 'activo' : 'inactivo', // Estado based on the toggle
       categoria,
     };
+
+    if (parseFloat(descuento) > 0) {
+      updatedProduct.vencimiento_descuento = fechaFinDescuento.toISOString().split('T')[0]; // Discount expiration date
+    }
 
     try {
       const response = await fetch(`http://170.239.85.88:5000/product/barcode/${barcode}`, {
@@ -134,51 +173,8 @@ export default function EditProduct({ route, navigation }) {
     }
   };
 
-  // Function to add the product again with new data via the API
-  const handleAddAgain = async () => {
-    const newProduct = {
-      nombre,
-      descripcion: description,
-      fecha_vencimiento: fechaVencimiento.toISOString().split('T')[0],
-      stock: parseInt(stock),
-      descuento: descuento ? parseFloat(descuento) : 0,
-      precio_venta: parseFloat(precio),
-      estado: "activo", 
-      categoria,
-      codigo_barras: barcode,
-    };
-    console.log('Adding product again with data:', newProduct);
-    try {
-      const response = await fetch('http://170.239.85.88:5000/product', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(newProduct),
-      });
-
-      const result = await response.json();
-
-      if (response.ok) {
-        setAddAgainModalVisible(true); // Show success modal
-      } else {
-        setErrorMessage(result.msg || 'Hubo un error al agregar el producto');
-        setErrorModalVisible(true);
-      }
-    } catch (error) {
-      console.error('Error adding product again:', error);
-      setErrorMessage('No se pudo conectar con el servidor.');
-      setErrorModalVisible(true);
-    }
-  };
-
   const closeEditModal = () => {
     setModalVisible(false);
-    navigation.goBack();
-  };
-
-  const closeAddAgainModal = () => {
-    setAddAgainModalVisible(false);
     navigation.goBack();
   };
 
@@ -196,23 +192,6 @@ export default function EditProduct({ route, navigation }) {
               <Icon name="check-circle" size={60} color="#4caf50" />
               <Text style={styles.modalTitle}>¡Producto Editado!</Text>
               <TouchableOpacity onPress={closeEditModal} style={styles.finishButton}>
-                <Text style={styles.finishButtonText}>Regresar</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
-
-        <Modal
-          animationType="slide"
-          transparent={true}
-          visible={addAgainModalVisible}
-          onRequestClose={closeAddAgainModal}
-        >
-          <View style={styles.modalBackground}>
-            <View style={styles.modalContainer}>
-              <Icon name="check-circle" size={60} color="#4caf50" />
-              <Text style={styles.modalTitle}>¡Producto Agregado de Nuevo!</Text>
-              <TouchableOpacity onPress={closeAddAgainModal} style={styles.finishButton}>
                 <Text style={styles.finishButtonText}>Regresar</Text>
               </TouchableOpacity>
             </View>
@@ -259,7 +238,7 @@ export default function EditProduct({ route, navigation }) {
         </TouchableOpacity>
 
         {dropdownVisible && (
-          <View style={styles.dropdownContainer}>
+          <Animated.View style={[styles.dropdownContainer, { opacity: dropdownFadeAnim }]}>
             <TextInput
               style={styles.searchInput}
               placeholder="Buscar categoría"
@@ -287,8 +266,25 @@ export default function EditProduct({ route, navigation }) {
                 </TouchableOpacity>
               ))}
             </ScrollView>
-          </View>
+          </Animated.View>
         )}
+
+        <Text style={styles.label}>Estado del Producto</Text>
+        <View style={styles.switchContainer}>
+          <TouchableOpacity
+            style={[styles.toggleButton, isActive ? styles.activeButton : styles.inactiveButton]}
+            onPress={() => setIsActive(true)}
+          >
+            <Text style={[styles.toggleText, isActive ? styles.activeText : styles.inactiveText]}>Activo</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.toggleButton, !isActive ? styles.activeButton : styles.inactiveButton]}
+            onPress={() => setIsActive(false)}
+          >
+            <Text style={[styles.toggleText, !isActive ? styles.activeText : styles.inactiveText]}>Inactivo</Text>
+          </TouchableOpacity>
+        </View>
 
         <Text style={styles.label}>Descripción</Text>
         <TextInput
@@ -328,6 +324,27 @@ export default function EditProduct({ route, navigation }) {
           placeholderTextColor="#ABB2B9"
           keyboardType="numeric"
         />
+
+          {parseFloat(descuento) > 0 && (
+          <Animated.View style={{ opacity: fadeAnim }}>
+            <Text style={styles.label}>Fecha de Fin del Descuento</Text>
+            <TouchableOpacity onPress={() => setShowFechaFinDescuentoPicker(true)} style={styles.input}>
+              <Text style={styles.dateText}>{fechaFinDescuento.toISOString().split('T')[0]}</Text>
+            </TouchableOpacity>
+            {showFechaFinDescuentoPicker && (
+              <DateTimePicker
+                value={fechaFinDescuento}
+                mode="date"
+                display="default"
+                onChange={(event, selectedDate) => {
+                  setShowFechaFinDescuentoPicker(false);
+                  if (selectedDate) setFechaFinDescuento(selectedDate);
+                }}
+              />
+            )}
+          </Animated.View>
+        )}
+
 
         <Text style={styles.label}>Fecha de Compra</Text>
         <TouchableOpacity onPress={() => setShowFechaCompraPicker(true)} style={styles.input}>
@@ -374,10 +391,6 @@ export default function EditProduct({ route, navigation }) {
         <TouchableOpacity style={styles.solidButton} onPress={handleEditProduct}>
           <Text style={styles.solidButtonText}>Guardar Cambios</Text>
         </TouchableOpacity>
-
-        <TouchableOpacity style={styles.secondaryButton} onPress={handleAddAgain}>
-          <Text style={styles.secondaryButtonText}>Agregar Con Nuevos Datos</Text>
-        </TouchableOpacity>
       </ScrollView>
     </TouchableWithoutFeedback>
   );
@@ -422,7 +435,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     borderColor: '#3BCEAC',
     borderWidth: 1,
-    position: 'relative', // For dropdown alignment
+    position: 'relative',
     zIndex: 1,
   },
   dropdownContainer: {
@@ -430,7 +443,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderColor: '#3BCEAC',
     borderWidth: 1,
-    marginTop: -10, // Attach to input field seamlessly
+    marginTop: -10,
     overflow: 'hidden',
     position: 'relative',
     zIndex: 1,
@@ -471,18 +484,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
   },
-  secondaryButton: {
-    marginTop: 10,
-    borderRadius: 10,
-    backgroundColor: '#FF6B6B',
-    paddingVertical: 15,
-    alignItems: 'center',
-  },
-  secondaryButtonText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
   modalBackground: {
     flex: 1,
     justifyContent: 'center',
@@ -516,5 +517,37 @@ const styles = StyleSheet.create({
   finishButtonText: {
     color: 'white',
     fontWeight: 'bold',
+  },
+  switchContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 15,
+  },
+  toggleButton: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    marginHorizontal: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+  },
+  activeButton: {
+    backgroundColor: '#3BCEAC', 
+    borderColor: '#3BCEAC',
+  },
+  inactiveButton: {
+    backgroundColor: 'transparent',
+    borderColor: '#3BCEAC',
+  },
+  toggleText: {
+    fontWeight: 'bold',
+  },
+  activeText: {
+    color: '#1A2238', 
+  },
+  inactiveText: {
+    color: '#ABB2B9', 
   },
 });
