@@ -3,13 +3,14 @@ import { Text, View, StyleSheet, TouchableOpacity, Animated, Modal } from "react
 import { CameraView, Camera } from "expo-camera";
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useFocusEffect } from "@react-navigation/native";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 
 export default function BarcodeScannerPage({ navigation }) {
   useFocusEffect(
     React.useCallback(() => {
       setScanned(false); 
-      setIsReadyToScan(true); // Reset scan status on focus
+      setIsReadyToScan(true);
     }, [])
   );
 
@@ -18,8 +19,8 @@ export default function BarcodeScannerPage({ navigation }) {
   const [scanned, setScanned] = useState(false);
   const [barcodeData, setBarcodeData] = useState('');
   const [buttonOpacity] = useState(new Animated.Value(0));
+  const [userType, setUserType] = useState(''); // Default user type
 
-  // Modal states
   const [modalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
@@ -28,14 +29,30 @@ export default function BarcodeScannerPage({ navigation }) {
       setHasPermission(status === "granted");
     };
 
+    const obtenerTipoUsuario = async () => {
+      try {
+        const token = await AsyncStorage.getItem('token');
+        const response = await fetch('http://170.239.85.88:5000/profile', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+        const data = await response.json();
+        setUserType(data.tipo_usuario);
+      } catch (error) {
+        console.error('Error al obtener el tipo de usuario:', error);
+      }
+    };
     getCameraPermissions();
+    obtenerTipoUsuario();
   }, []);
 
   const handleBarcodeScanned = ({ type, data }) => {
     setScanned(true);
     setBarcodeData(data);
     setModalVisible(true);
-    setIsReadyToScan(false); // Disable scanning after successful scan
+    setIsReadyToScan(false); 
     Animated.timing(buttonOpacity, {
       toValue: 1,
       duration: 500,
@@ -45,19 +62,19 @@ export default function BarcodeScannerPage({ navigation }) {
 
   const closeModal = () => {
     setModalVisible(false);
-    setScanned(false); // Allow the scanner to be used again
-    setBarcodeData(''); // Clear the scanned data
-    setIsReadyToScan(true); // Re-enable scanning
+    setScanned(false);
+    setBarcodeData('');
+    setIsReadyToScan(true);
   };
 
   const goToAddProduct = () => {
     setModalVisible(false);
-    navigation.navigate('AddProduct', { scannedBarcode: barcodeData }); // Navigate to AddProduct and pass barcode data
+    navigation.navigate('AddProduct', { scannedBarcode: barcodeData });
   };
 
   const goToInventory = () => {
     setModalVisible(false);
-    navigation.navigate('InventoryScreen', { searchBarcode: barcodeData }); // Navigate to InventoryScreen and pass barcode data
+    navigation.navigate('InventoryScreen', { searchBarcode: barcodeData });
   };
 
   if (hasPermission === null) {
@@ -66,7 +83,6 @@ export default function BarcodeScannerPage({ navigation }) {
   if (hasPermission === false) {
     return <Text>No se tiene acceso a la cámara</Text>;
   }
-
   return (
     <View style={styles.container}>
       <Modal
@@ -82,11 +98,13 @@ export default function BarcodeScannerPage({ navigation }) {
             <Text style={styles.modalMessage}>Código escaneado: {barcodeData}</Text>
             <View style={styles.modalButtonContainer}>
               <View style={styles.firstButtonRow}>
-                <View style={styles.buttonWrapper}>
-                  <TouchableOpacity onPress={goToAddProduct} style={[styles.button, styles.addMoreButton]}>
-                    <Text style={styles.addMoreButtonText}>Agregar Producto</Text>
-                  </TouchableOpacity>
-                </View>
+                {userType === 'admin' && (
+                  <View style={styles.buttonWrapper}>
+                    <TouchableOpacity onPress={goToAddProduct} style={[styles.button, styles.addMoreButton]}>
+                      <Text style={styles.addMoreButtonText}>Agregar Producto</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
                 <View style={styles.buttonWrapper}>
                   <TouchableOpacity onPress={goToInventory} style={[styles.button, styles.searchButton]}>
                     <Text style={styles.searchButtonText}>Buscar Producto</Text>
@@ -101,7 +119,6 @@ export default function BarcodeScannerPage({ navigation }) {
         </View>
       </Modal>
 
-      {/* Header with Back Button and Title */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Icon name="arrow-back" size={24} color="#fff" />
@@ -109,11 +126,10 @@ export default function BarcodeScannerPage({ navigation }) {
         <Text style={styles.title}>Escanear Producto</Text>
       </View>
 
-      {/* Camera View */}
       <CameraView
         onBarcodeScanned={scanned ? undefined : handleBarcodeScanned}
         barcodeScannerSettings={{
-          barcodeTypes: [ "ean13"],
+          barcodeTypes: ["ean13"],
         }}
         style={styles.camera}
       />
@@ -131,7 +147,6 @@ export default function BarcodeScannerPage({ navigation }) {
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -219,7 +234,6 @@ const styles = StyleSheet.create({
   searchButton: {
     backgroundColor: '#1abc9c',
     paddingVertical: 15,
-    marginLeft: 5,
   },
   searchButtonText: {
     color: 'white',
@@ -231,7 +245,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 30,
     borderRadius: 5,
     alignSelf: 'center',
-    width: '100%', // Full width for the scan again button
+    width: '100%', 
   },
   scanAgainButtonText: {
     color: 'white',

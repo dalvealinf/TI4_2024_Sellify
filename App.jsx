@@ -18,6 +18,7 @@ import AddProductAgain from './screens/addProductAgain';
 import * as Notifications from 'expo-notifications';
 import { useEffect, useRef } from 'react';
 import { Platform } from 'react-native';
+import InactiveUsers from './screens/InactiveUsers';
 
 // Create the stack navigator
 const Stack = createStackNavigator();
@@ -69,6 +70,7 @@ export default function App() {
           <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
           <Stack.Screen name="EditUser" component={EditUser} />
           <Stack.Screen name="AddProductAgain" component={AddProductAgain} />
+          <Stack.Screen name="InactiveUsers" component={InactiveUsers} />
         </Stack.Navigator>
       </NavigationContainer>
     </PaperProvider>

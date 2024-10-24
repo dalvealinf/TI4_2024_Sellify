@@ -19,6 +19,8 @@
     "expo": "~51.0.28",
     "expo-barcode-scanner": "^13.0.1",
     "expo-camera": "~15.0.15",
+    "expo-constants": "~16.0.2",
+    "expo-device": "~6.0.2",
     "expo-linear-gradient": "^13.0.2",
     "expo-notifications": "~0.28.18",
     "expo-permissions": "^14.4.0",
@@ -28,6 +30,7 @@
     "react-feather": "^2.0.10",
     "react-native": "0.74.5",
     "react-native-chart-kit": "^6.12.0",
+    "react-native-elements": "^3.4.3",
     "react-native-gesture-handler": "^2.19.0",
     "react-native-modal": "^13.0.1",
     "react-native-paper": "^5.12.5",
@@ -38,9 +41,7 @@
     "react-native-snap-carousel": "^3.9.1",
     "react-native-svg": "^15.6.0",
     "react-native-swiper": "^1.6.0",
-    "react-native-vector-icons": "^10.1.0",
-    "expo-device": "~6.0.2",
-    "expo-constants": "~16.0.2"
+    "react-native-vector-icons": "^10.2.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"
