@@ -1,26 +1,39 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Text, View, StyleSheet, TouchableOpacity, Animated, Modal } from "react-native";
 import { CameraView, Camera } from "expo-camera";
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useFocusEffect } from "@react-navigation/native";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
+import io from 'socket.io-client';
 
 export default function BarcodeScannerPage({ navigation }) {
-  useFocusEffect(
-    React.useCallback(() => {
-      setScanned(false); 
-      setIsReadyToScan(true); // Reset scan status on focus
-    }, [])
-  );
-
   const [isReadyToScan, setIsReadyToScan] = useState(true);
   const [hasPermission, setHasPermission] = useState(null);
   const [scanned, setScanned] = useState(false);
   const [barcodeData, setBarcodeData] = useState('');
   const [buttonOpacity] = useState(new Animated.Value(0));
-
-  // Modal states
+  const [userType, setUserType] = useState('');
+  const [userRut, setUserRut] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
+  const socketRef = useRef(null);
+
+  // Manejar el estado del escaneo cuando la screen está en uso
+  useFocusEffect(
+    React.useCallback(() => {
+      setScanned(false); 
+      setIsReadyToScan(true);
+
+      return () => {
+        if (isConnected && socketRef.current) {
+          socketRef.current.disconnect();
+          setIsConnected(false);
+          console.log('Desconectado del servidor WebSocket');
+        }
+      };
+    }, [isConnected])
+  );
 
   useEffect(() => {
     const getCameraPermissions = async () => {
@@ -28,14 +41,36 @@ export default function BarcodeScannerPage({ navigation }) {
       setHasPermission(status === "granted");
     };
 
+    const obtenerTipoUsuario = async () => {
+      try {
+        const token = await AsyncStorage.getItem('token');
+        const response = await fetch('http://170.239.85.88:5000/profile', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+        const data = await response.json();
+        setUserType(data.tipo_usuario);
+        setUserRut(data.rut);
+      } catch (error) {
+        console.error('Error al obtener el tipo de usuario y rut:', error);
+      }
+    };
     getCameraPermissions();
+    obtenerTipoUsuario();
   }, []);
 
   const handleBarcodeScanned = ({ type, data }) => {
     setScanned(true);
     setBarcodeData(data);
     setModalVisible(true);
-    setIsReadyToScan(false); // Disable scanning after successful scan
+    setIsReadyToScan(false);
+
+    if (socketRef.current && userRut) {
+      socketRef.current.emit('barcode_scanned', { barcode: data, rut: userRut });
+    }
+
     Animated.timing(buttonOpacity, {
       toValue: 1,
       duration: 500,
@@ -45,19 +80,49 @@ export default function BarcodeScannerPage({ navigation }) {
 
   const closeModal = () => {
     setModalVisible(false);
-    setScanned(false); // Allow the scanner to be used again
-    setBarcodeData(''); // Clear the scanned data
-    setIsReadyToScan(true); // Re-enable scanning
+    setScanned(false);
+    setBarcodeData('');
+    setIsReadyToScan(true);
   };
 
   const goToAddProduct = () => {
     setModalVisible(false);
-    navigation.navigate('AddProduct', { scannedBarcode: barcodeData }); // Navigate to AddProduct and pass barcode data
+    navigation.navigate('AddProduct', { scannedBarcode: barcodeData });
   };
 
   const goToInventory = () => {
     setModalVisible(false);
-    navigation.navigate('InventoryScreen', { searchBarcode: barcodeData }); // Navigate to InventoryScreen and pass barcode data
+    navigation.navigate('InventoryScreen', { searchBarcode: barcodeData });
+  };
+
+  const handleLinkToWeb = () => {
+    if (isConnected) {
+      socketRef.current.disconnect();
+      setIsConnected(false);
+      console.log('Desconectado del servidor WebSocket');
+    } else {
+      socketRef.current = io('http://170.239.85.88:5000');
+      
+      socketRef.current.on('connect', () => {
+        console.log('Conectado al servidor WebSocket');
+        setIsConnected(true);
+        socketRef.current.emit('scan_request', { rut: userRut });
+      });
+
+      socketRef.current.off('scan_response');
+      socketRef.current.on('scan_response', (data) => {
+        if (data.message === 'Escaneo iniciado') {
+          alert('Escaneo iniciado exitosamente en la web');
+        } else {
+          alert('Error en el proceso de escaneo');
+        }
+      });
+
+      socketRef.current.on('connect_error', (error) => {
+        console.error('Error de conexión WebSocket:', error);
+        alert('No se pudo conectar con la API');
+      });
+    }
   };
 
   if (hasPermission === null) {
@@ -82,11 +147,13 @@ export default function BarcodeScannerPage({ navigation }) {
             <Text style={styles.modalMessage}>Código escaneado: {barcodeData}</Text>
             <View style={styles.modalButtonContainer}>
               <View style={styles.firstButtonRow}>
-                <View style={styles.buttonWrapper}>
-                  <TouchableOpacity onPress={goToAddProduct} style={[styles.button, styles.addMoreButton]}>
-                    <Text style={styles.addMoreButtonText}>Agregar Producto</Text>
-                  </TouchableOpacity>
-                </View>
+                {userType === 'admin' && (
+                  <View style={styles.buttonWrapper}>
+                    <TouchableOpacity onPress={goToAddProduct} style={[styles.button, styles.addMoreButton]}>
+                      <Text style={styles.addMoreButtonText}>Agregar Producto</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
                 <View style={styles.buttonWrapper}>
                   <TouchableOpacity onPress={goToInventory} style={[styles.button, styles.searchButton]}>
                     <Text style={styles.searchButtonText}>Buscar Producto</Text>
@@ -101,19 +168,26 @@ export default function BarcodeScannerPage({ navigation }) {
         </View>
       </Modal>
 
-      {/* Header with Back Button and Title */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Icon name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.title}>Escanear Producto</Text>
+        <TouchableOpacity 
+          onPress={handleLinkToWeb} 
+          style={[
+            styles.linkButton, 
+            isConnected ? styles.connectedBorder : styles.disconnectedBorder
+          ]}
+        >
+          <Icon name={isConnected ? 'unlink-outline' : 'link-outline'} size={24} color="#fff" />
+        </TouchableOpacity>
       </View>
 
-      {/* Camera View */}
       <CameraView
         onBarcodeScanned={scanned ? undefined : handleBarcodeScanned}
         barcodeScannerSettings={{
-          barcodeTypes: [ "ean13"],
+          barcodeTypes: ["ean13"],
         }}
         style={styles.camera}
       />
@@ -219,7 +293,6 @@ const styles = StyleSheet.create({
   searchButton: {
     backgroundColor: '#1abc9c',
     paddingVertical: 15,
-    marginLeft: 5,
   },
   searchButtonText: {
     color: 'white',
@@ -231,14 +304,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 30,
     borderRadius: 5,
     alignSelf: 'center',
-    width: '100%', // Full width for the scan again button
+    width: '100%', 
   },
   scanAgainButtonText: {
     color: 'white',
     fontWeight: 'bold',
-    textAlign: 'center', // Center text inside button
+    textAlign: 'center',
   },
-  // Scan status indicator styles
   scanStatusContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -249,5 +321,21 @@ const styles = StyleSheet.create({
     marginLeft: 10,
     color: 'white',
     fontSize: 16,
+  },
+  linkButton: {
+    position: 'absolute',
+    right: 15,
+  },
+  connectedBorder: {
+    borderColor: 'green',
+    borderWidth: 2,
+    borderRadius: 10,
+    padding: 4,
+  },
+  disconnectedBorder: {
+    borderColor: 'red',
+    borderWidth: 2,
+    borderRadius: 10,
+    padding: 4,
   },
 });
