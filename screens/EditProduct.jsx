@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Modal,
   TouchableWithoutFeedback,
   Keyboard,
+  Animated,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -16,13 +17,11 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 export default function EditProduct({ route, navigation }) {
   const { product } = route.params;
 
-  // Helper function to validate dates
   const validateDate = (dateString) => {
     const date = new Date(dateString);
-    return !isNaN(date.getTime()) ? date : new Date(); // Use current date if invalid
+    return !isNaN(date.getTime()) ? date : new Date();
   };
 
-  // States for product data
   const [nombre, setNombre] = useState((product.nombre) || '');
   const [categoria, setCategoria] = useState((product.categoria) || 'Lacteos');
   const [precio, setPrecio] = useState((product.precio_venta) || '');
@@ -30,11 +29,12 @@ export default function EditProduct({ route, navigation }) {
   const [descuento, setDescuento] = useState((product.descuento) || '0');
   const [fechaCompra, setFechaCompra] = useState(validateDate(product.fecha_registro));
   const [fechaVencimiento, setFechaVencimiento] = useState(validateDate(product.fecha_vencimiento));
+  const [fechaFinDescuento, setFechaFinDescuento] = useState(new Date());
   const [barcode, setBarcode] = useState((product.codigo_barras) || '');
   const [description, setDescription] = useState((product.descripcion) || '');
 
-  // State to manage product status (estado)
-  const [isActive, setIsActive] = useState(product.estado_producto === 'activo'); // True if active, False if inactive
+
+  const [isActive, setIsActive] = useState(product.estado_producto === 'activo');
 
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const [categories, setCategories] = useState([]);
@@ -44,10 +44,14 @@ export default function EditProduct({ route, navigation }) {
 
   const [showFechaCompraPicker, setShowFechaCompraPicker] = useState(false);
   const [showFechaVencimientoPicker, setShowFechaVencimientoPicker] = useState(false);
+  const [showFechaFinDescuentoPicker, setShowFechaFinDescuentoPicker] = useState(false); 
 
   const [modalVisible, setModalVisible] = useState(false);
   const [errorModalVisible, setErrorModalVisible] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const dropdownFadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     async function fetchCategories() {
@@ -79,8 +83,37 @@ export default function EditProduct({ route, navigation }) {
     };
   }, [dropdownVisible, categoria, customCategory]);
 
+  useEffect(() => {
+    if (parseFloat(descuento) > 0) {
+      Animated.timing(fadeAnim, {
+        toValue: 1, 
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      Animated.timing(fadeAnim, {
+        toValue: 0, 
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [descuento]);
+
   const toggleDropdown = () => {
-    setDropdownVisible(!dropdownVisible);
+    if (dropdownVisible) {
+      Animated.timing(dropdownFadeAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start(() => setDropdownVisible(false));
+    } else {
+      setDropdownVisible(true);
+      Animated.timing(dropdownFadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    }
   };
 
   const handleSearch = (query) => {
@@ -100,7 +133,6 @@ export default function EditProduct({ route, navigation }) {
     }
   };
 
-  // Function to edit the product via the API
   const handleEditProduct = async () => {
     const updatedProduct = {
       nombre: nombre,
@@ -112,6 +144,10 @@ export default function EditProduct({ route, navigation }) {
       estado: isActive ? 'activo' : 'inactivo', // Estado based on the toggle
       categoria,
     };
+
+    if (parseFloat(descuento) > 0) {
+      updatedProduct.vencimiento_descuento = fechaFinDescuento.toISOString().split('T')[0]; // Discount expiration date
+    }
 
     try {
       const response = await fetch(`http://170.239.85.88:5000/product/barcode/${barcode}`, {
@@ -202,7 +238,7 @@ export default function EditProduct({ route, navigation }) {
         </TouchableOpacity>
 
         {dropdownVisible && (
-          <View style={styles.dropdownContainer}>
+          <Animated.View style={[styles.dropdownContainer, { opacity: dropdownFadeAnim }]}>
             <TextInput
               style={styles.searchInput}
               placeholder="Buscar categoría"
@@ -230,7 +266,7 @@ export default function EditProduct({ route, navigation }) {
                 </TouchableOpacity>
               ))}
             </ScrollView>
-          </View>
+          </Animated.View>
         )}
 
         <Text style={styles.label}>Estado del Producto</Text>
@@ -288,6 +324,27 @@ export default function EditProduct({ route, navigation }) {
           placeholderTextColor="#ABB2B9"
           keyboardType="numeric"
         />
+
+          {parseFloat(descuento) > 0 && (
+          <Animated.View style={{ opacity: fadeAnim }}>
+            <Text style={styles.label}>Fecha de Fin del Descuento</Text>
+            <TouchableOpacity onPress={() => setShowFechaFinDescuentoPicker(true)} style={styles.input}>
+              <Text style={styles.dateText}>{fechaFinDescuento.toISOString().split('T')[0]}</Text>
+            </TouchableOpacity>
+            {showFechaFinDescuentoPicker && (
+              <DateTimePicker
+                value={fechaFinDescuento}
+                mode="date"
+                display="default"
+                onChange={(event, selectedDate) => {
+                  setShowFechaFinDescuentoPicker(false);
+                  if (selectedDate) setFechaFinDescuento(selectedDate);
+                }}
+              />
+            )}
+          </Animated.View>
+        )}
+
 
         <Text style={styles.label}>Fecha de Compra</Text>
         <TouchableOpacity onPress={() => setShowFechaCompraPicker(true)} style={styles.input}>
@@ -378,7 +435,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     borderColor: '#3BCEAC',
     borderWidth: 1,
-    position: 'relative', // For dropdown alignment
+    position: 'relative',
     zIndex: 1,
   },
   dropdownContainer: {
@@ -386,7 +443,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderColor: '#3BCEAC',
     borderWidth: 1,
-    marginTop: -10, // Attach to input field seamlessly
+    marginTop: -10,
     overflow: 'hidden',
     position: 'relative',
     zIndex: 1,
@@ -477,20 +534,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   activeButton: {
-    backgroundColor: '#3BCEAC', // Same color as the solid buttons
+    backgroundColor: '#3BCEAC', 
     borderColor: '#3BCEAC',
   },
   inactiveButton: {
-    backgroundColor: 'transparent', // No fill for the inactive button
-    borderColor: '#3BCEAC', // Use the same border color
+    backgroundColor: 'transparent',
+    borderColor: '#3BCEAC',
   },
   toggleText: {
     fontWeight: 'bold',
   },
   activeText: {
-    color: '#1A2238', // Dark color for the active state
+    color: '#1A2238', 
   },
   inactiveText: {
-    color: '#ABB2B9', // Light color for the inactive state
+    color: '#ABB2B9', 
   },
 });
