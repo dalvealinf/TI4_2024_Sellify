@@ -2,20 +2,41 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator, Modal } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import { useNavigation, useFocusEffect } from '@react-navigation/native'; 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function InventoryScreen({ route }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [products, setProducts] = useState([]);
   const [expandedProduct, setExpandedProduct] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [showInactive, setShowInactive] = useState(false); 
-  const [confirmationModalVisible, setConfirmationModalVisible] = useState(false); // Confirmation modal state
-  const [selectedProduct, setSelectedProduct] = useState(null); // Product to deactivate
-  const [modalVisible, setModalVisible] = useState(false); // State for success/error modal
-  const [modalMessage, setModalMessage] = useState(''); // Message to show in modal
-  const [isSuccess, setIsSuccess] = useState(true); // Differentiate between success and error
+  const [showInactive, setShowInactive] = useState(false);
+  const [confirmationModalVisible, setConfirmationModalVisible] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
+  const [isSuccess, setIsSuccess] = useState(true);
+  const [userType, setUserType] = useState(''); 
   const navigation = useNavigation();
 
+  useEffect(() => {
+    const fetchUserType = async () => {
+      try {
+        const token = await AsyncStorage.getItem('token');
+        const response = await fetch('http://170.239.85.88:5000/profile', {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const data = await response.json();
+        setUserType(data.tipo_usuario); 
+      } catch (error) {
+        console.error('Error al obtener el tipo de usuario:', error);
+      }
+    };
+
+    fetchUserType();
+  }, []);
 
   useEffect(() => {
     if (route.params?.searchBarcode) {
@@ -23,25 +44,24 @@ export default function InventoryScreen({ route }) {
     }
   }, [route.params?.searchBarcode]);
 
-
   useFocusEffect(
     useCallback(() => {
       fetchProducts(); 
-    }, [showInactive]) 
+    }, [showInactive])
   );
 
-
   const fetchProducts = async () => {
-    setLoading(true); 
+    setLoading(true);
     try {
       const response = await fetch('http://170.239.85.88:5000/products');
       const data = await response.json();
 
       const formattedProducts = data
-        .filter(product => product.estado_producto === (showInactive ? 'inactivo' : 'activo')) 
+        .filter(product => product.estado_producto === (showInactive ? 'inactivo' : 'activo'))
         .map(product => {
           const fechaRegistroValida = product.fecha_registro ? new Date(product.fecha_registro) : null;
           const fechaVencimientoValida = product.fecha_vencimiento ? new Date(product.fecha_vencimiento) : null;
+          const fechaFinDescuentoValida = product.vencimiento_descuento ? new Date(product.vencimiento_descuento) : null;
 
           return {
             ...product,
@@ -51,6 +71,9 @@ export default function InventoryScreen({ route }) {
             fecha_vencimiento: fechaVencimientoValida && !isNaN(fechaVencimientoValida)
               ? fechaVencimientoValida.toISOString().split('T')[0]
               : 'Fecha inválida',
+            vencimiento_descuento: fechaFinDescuentoValida && !isNaN(fechaFinDescuentoValida)
+              ? fechaFinDescuentoValida.toISOString().split('T')[0]
+              : 'Sin descuento',
           };
         });
 
@@ -58,7 +81,7 @@ export default function InventoryScreen({ route }) {
     } catch (error) {
       console.error('Error al obtener productos:', error);
     } finally {
-      setLoading(false); 
+      setLoading(false);
     }
   };
 
@@ -81,20 +104,20 @@ export default function InventoryScreen({ route }) {
       setModalMessage('No se pudo conectar con el servidor.');
       setIsSuccess(false);
     } finally {
-      setModalVisible(true); // Show the modal after the operation
-      fetchProducts(); // Refresh the product list
+      setModalVisible(true);
+      fetchProducts();
     }
   };
 
   const confirmDeactivateProduct = (product) => {
-    setSelectedProduct(product); // Set the product to be deactivated
-    setConfirmationModalVisible(true); // Show the confirmation modal
+    setSelectedProduct(product);
+    setConfirmationModalVisible(true);
   };
 
   const handleConfirmDeactivate = () => {
     if (selectedProduct) {
-      deactivateProduct(selectedProduct.codigo_barras); // Proceed with deactivating the product
-      setConfirmationModalVisible(false); // Close confirmation modal
+      deactivateProduct(selectedProduct.codigo_barras);
+      setConfirmationModalVisible(false);
     }
   };
 
@@ -106,25 +129,23 @@ export default function InventoryScreen({ route }) {
     setConfirmationModalVisible(false);
   };
 
-
   const addAgainProduct = (product) => {
-    navigation.navigate('AddProductAgain', { product }); 
+    navigation.navigate('AddProductAgain', { product });
   };
 
   const filteredProducts = products.filter(product =>
     product.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
     product.codigo_barras.includes(searchTerm)
   );
-
   return (
     <View style={styles.container}>
       <View style={styles.headerContainer}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="white" />
         </TouchableOpacity>
-
+  
         <Text style={styles.header}>Inventario</Text>
-
+  
         <TouchableOpacity
           style={styles.toggleButton}
           onPress={() => setShowInactive(!showInactive)}
@@ -134,7 +155,7 @@ export default function InventoryScreen({ route }) {
           </Text>
         </TouchableOpacity>
       </View>
-
+  
       <View style={styles.searchContainer}>
         <View style={styles.inputContainer}>
           <Icon name="search" size={20} color="#888" style={styles.searchIcon} />
@@ -147,7 +168,7 @@ export default function InventoryScreen({ route }) {
           />
         </View>
       </View>
-
+  
       {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#3BCEAC" />
@@ -160,20 +181,21 @@ export default function InventoryScreen({ route }) {
               <View style={styles.productInfo}>
                 <Text style={styles.productName}>{product.nombre}</Text>
                 <Text style={styles.productDetails}>Precio: {product.precio_venta}</Text>
-
+  
                 <TouchableOpacity
                   style={styles.expandButton}
                   onPress={() => setExpandedProduct(expandedProduct === product.id_producto ? null : product.id_producto)}
                 >
                   <Icon name={expandedProduct === product.id_producto ? "chevron-up" : "chevron-down"} size={20} color="white" />
                 </TouchableOpacity>
-
+  
                 {expandedProduct === product.id_producto && (
                   <View style={styles.additionalInfo}>
                     <Text style={styles.additionalText}>Código: {product.codigo_barras}</Text>
                     <Text style={styles.additionalText}>Estado: {product.estado_producto}</Text>
                     <Text style={styles.additionalText}>Stock: {product.stock}</Text>
                     <Text style={styles.additionalText}>Descuento: {product.descuento}%</Text>
+                    <Text style={styles.additionalText}>Fin del descuento: {product.vencimiento_descuento}</Text>
                     <Text style={styles.additionalText}>Categoría: {product.categoria}</Text>
                     <Text style={styles.additionalText}>Fecha de compra: {product.fecha_registro}</Text>
                     <Text style={styles.additionalText}>Fecha de vencimiento: {product.fecha_vencimiento}</Text>
@@ -181,36 +203,37 @@ export default function InventoryScreen({ route }) {
                   </View>
                 )}
               </View>
-
-              <View style={styles.actions}>
-                <TouchableOpacity
-                  style={styles.editButton}
-                  onPress={() => navigation.navigate('EditProduct', { product })}
-                >
-                  <Icon name="edit" size={20} color="black" />
-                  <Text style={styles.editButtonText}>Editar</Text>
-                </TouchableOpacity>
-
-
-                {!showInactive && (
+  
+              {/* Action buttons for 'admin' only */}
+              {userType === 'admin' && (
+                <View style={styles.actions}>
                   <TouchableOpacity
-                    style={styles.deleteButton}
-                    onPress={() => confirmDeactivateProduct(product)}
+                    style={styles.editButton}
+                    onPress={() => navigation.navigate('EditProduct', { product })}
                   >
-                    <Icon name="trash-2" size={20} color="black" />
-                    <Text style={styles.deleteButtonText}>Desactivar</Text>
+                    <Icon name="edit" size={20} color="black" />
+                    <Text style={styles.editButtonText}>Editar</Text>
                   </TouchableOpacity>
-                )}
-
-                {/* Add Again Button */}
-                <TouchableOpacity
-                  style={styles.addAgainButton}
-                  onPress={() => addAgainProduct(product)} // Navigate to Add Product page
-                >
-                  <Icon name="plus" size={20} color="black" />
-                  <Text style={styles.addAgainButtonText}>Agregar de Nuevo</Text>
-                </TouchableOpacity>
-              </View>
+  
+                  {!showInactive && (
+                    <TouchableOpacity
+                      style={styles.deleteButton}
+                      onPress={() => confirmDeactivateProduct(product)}
+                    >
+                      <Icon name="trash-2" size={20} color="black" />
+                      <Text style={styles.deleteButtonText}>Desactivar</Text>
+                    </TouchableOpacity>
+                  )}
+  
+                  <TouchableOpacity
+                    style={styles.addAgainButton}
+                    onPress={() => addAgainProduct(product)}
+                  >
+                    <Icon name="plus" size={20} color="black" />
+                    <Text style={styles.addAgainButtonText}>Agregar de Nuevo</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
             </View>
           ))}
         </ScrollView>
@@ -219,8 +242,8 @@ export default function InventoryScreen({ route }) {
           <Text style={styles.noDataText}>No existe ningún producto actualmente.</Text>
         </View>
       )}
-
-
+  
+      {/* Confirmation Modal */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -243,8 +266,8 @@ export default function InventoryScreen({ route }) {
           </View>
         </View>
       </Modal>
-
-
+  
+      {/* Success/Error Modal */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -264,6 +287,7 @@ export default function InventoryScreen({ route }) {
       </Modal>
     </View>
   );
+  
 }
 
 const styles = StyleSheet.create({

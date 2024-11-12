@@ -1,20 +1,67 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, TextInput, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, TextInput, Image, Alert, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { Avatar } from 'react-native-elements';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 
 export default function UserProfile() {
-  const [userData] = useState({
-    name: "Edward Contreras",
-    role: "Admin",
-    email: "Matyasgoman@gmail.com",
-    phone: "545431248",
-    creationDate: "17-10-2024"
-  });
-
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
+
+  useEffect(() => {
+    const obtenerDatosUsuario = async () => {
+      try {
+        const token = await AsyncStorage.getItem('token');
+        if (!token) {
+          navigation.replace('Login');
+          return;
+        }
+
+        const response = await fetch('http://170.239.85.88:5000/profile', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setUser(data);
+        } else {
+          const errorData = await response.json();
+          Alert.alert('Error', errorData.msg || 'Error al obtener los datos del usuario');
+          navigation.replace('Login');
+        }
+      } catch (error) {
+        console.error('Error al obtener los datos del usuario:', error);
+        Alert.alert('Error', 'Error al conectar con el servidor');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    obtenerDatosUsuario();
+  }, []);
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#0000ff" />
+        <Text>Cargando datos del usuario...</Text>
+      </View>
+    );
+  }
+
+  if (!user) {
+    return (
+      <View style={styles.container}>
+        <Text>Error al cargar los datos del usuario.</Text>
+      </View>
+    );
+  }
 
   return (
     <LinearGradient
@@ -29,7 +76,7 @@ export default function UserProfile() {
           <Avatar
             size="xlarge"
             rounded
-            source={{ uri: "https://placeimg.com/640/480/any" }} // Imagen por defecto
+            source={{ uri: user.avatarUrl || "https://placeimg.com/640/480/any" }}
             containerStyle={styles.avatar}
           />
           <TouchableOpacity style={styles.cameraButton}>
@@ -38,27 +85,27 @@ export default function UserProfile() {
         </View>
 
         {/* Nombre y Role */}
-        <Text style={styles.nameText}>{userData.name}</Text>
+        <Text style={styles.nameText}>{`${user.nombre} ${user.apellido}`}</Text>
         <View style={styles.roleContainer}>
           <Icon name="star" size={16} color="#48BB78" />
-          <Text style={styles.roleText}>{userData.role}</Text>
+          <Text style={styles.roleText}>{user.tipo_usuario}</Text>
         </View>
 
         {/* Información del usuario */}
         <View style={styles.infoContainer}>
           <View style={styles.infoRow}>
             <Icon name="email" size={20} color="#48BB78" />
-            <Text style={styles.infoText}>{userData.email}</Text>
+            <Text style={styles.infoText}>{user.correo}</Text>
           </View>
 
           <View style={styles.infoRow}>
             <Icon name="phone" size={20} color="#48BB78" />
-            <Text style={styles.infoText}>{userData.phone}</Text>
+            <Text style={styles.infoText}>{user.telefono}</Text>
           </View>
 
           <View style={styles.infoRow}>
             <Icon name="calendar" size={20} color="#48BB78" />
-            <Text style={styles.infoText}>{userData.creationDate}</Text>
+            <Text style={styles.infoText}>{new Date(user.fecha_creacion).toLocaleDateString()}</Text>
           </View>
         </View>
 
@@ -165,5 +212,10 @@ const styles = StyleSheet.create({
     marginLeft: 5,
     color: 'white',
     fontSize: 16,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
