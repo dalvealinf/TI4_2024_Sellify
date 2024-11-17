@@ -19,6 +19,10 @@ import * as Notifications from 'expo-notifications';
 import { useEffect, useRef } from 'react';
 import { Platform } from 'react-native';
 import InactiveUsers from './screens/InactiveUsers';
+import { checkAndNotifyProducts } from './services/NotificationService.jsx';
+import { AppState } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 
 // Create the stack navigator
 const Stack = createStackNavigator();
@@ -30,6 +34,61 @@ Notifications.setNotificationHandler({
     shouldSetBadge: false,
   }),
 });
+async function registerForPushNotificationsAsync() {
+  let token;
+  if (Platform.OS === 'android') {
+    await Notifications.setNotificationChannelAsync('default', {
+      name: 'default',
+      importance: Notifications.AndroidImportance.MAX,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: '#FF231F7C',
+    });
+  }
+
+  // Fix: Use getPermissionsAsync instead of getAsync
+  const { status: existingStatus } = await Notifications.getPermissionsAsync();
+  let finalStatus = existingStatus;
+  if (existingStatus !== 'granted') {
+    const { status } = await Notifications.requestPermissionsAsync();
+    finalStatus = status;
+  }
+  if (finalStatus !== 'granted') {
+    alert('Failed to get push token for push notification!');
+    return;
+  }
+  token = (await Notifications.getExpoPushTokenAsync()).data;
+
+  return token;
+
+}
+const checkProducts = async () => {
+  try {
+    const lastCheck = await AsyncStorage.getItem('lastNotificationCheck');
+    const now = new Date().getTime();
+    
+    if (!lastCheck || (now - parseInt(lastCheck)) > 3600000) {
+      const response = await fetch('http://170.239.85.88:5000/products');
+      const products = await response.json();
+      await checkAndNotifyProducts(products, 'auto-check');
+      await AsyncStorage.setItem('lastNotificationCheck', now.toString());
+      console.log('Products checked at:', new Date().toLocaleString());
+    }
+  } catch (error) {
+    console.error('Error checking products:', error);
+  }
+};
+const forceNotificationCheck = async () => {
+  try {
+    console.log('Forcing notification check...');
+    const response = await fetch('http://170.239.85.88:5000/products');
+    const products = await response.json();
+    await checkAndNotifyProducts(products);
+    console.log('Force check completed at:', new Date().toLocaleString());
+  } catch (error) {
+    console.error('Error in force check:', error);
+  }
+};
+
 
 export default function App() {
   const notificationListener = useRef();
@@ -37,6 +96,14 @@ export default function App() {
 
   useEffect(() => {
     registerForPushNotificationsAsync();
+    checkProducts(); // Initial check
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      if (nextAppState === 'active') {
+        checkProducts();
+      }
+    });
+
+    const interval = setInterval(checkProducts, 3600000); // 1 hour
 
     notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
       console.log('Notification Received:', notification);
@@ -47,10 +114,13 @@ export default function App() {
     });
 
     return () => {
+      subscription.remove();
+      clearInterval(interval);
       Notifications.removeNotificationSubscription(notificationListener.current);
       Notifications.removeNotificationSubscription(responseListener.current);
     };
   }, []);
+
 
   return (
     <PaperProvider>
@@ -71,48 +141,9 @@ export default function App() {
           <Stack.Screen name="EditUser" component={EditUser} />
           <Stack.Screen name="AddProductAgain" component={AddProductAgain} />
           <Stack.Screen name="InactiveUsers" component={InactiveUsers} />
+          
         </Stack.Navigator>
       </NavigationContainer>
     </PaperProvider>
   );
-}
-
-// Register for push notifications and setup local notifications
-async function registerForPushNotificationsAsync() {
-  if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync('default', {
-      name: 'default',
-      importance: Notifications.AndroidImportance.MAX,
-      vibrationPattern: [0, 250, 250, 250],
-      lightColor: '#FF231F7C',
-    });
-  }
-
-  const { status: existingStatus } = await Notifications.getPermissionsAsync();
-  let finalStatus = existingStatus;
-  if (existingStatus !== 'granted') {
-    const { status } = await Notifications.requestPermissionsAsync();
-    finalStatus = status;
-  }
-  if (finalStatus !== 'granted') {
-    alert('Failed to get notification permissions!');
-    return;
-  }
-
-  // No need to get token for local notifications
-  console.log('Notification permissions granted.');
-}
-
-// Function to schedule a local notification for a product's expiration date
-export async function scheduleNotification(title, body, triggerDate) {
-  await Notifications.scheduleNotificationAsync({
-    content: {
-      title,
-      body,
-      sound: true,
-    },
-    trigger: {
-      date: triggerDate,
-    },
-  });
 }

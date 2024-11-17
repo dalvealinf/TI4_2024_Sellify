@@ -47,44 +47,6 @@ export default function AddProduct({ navigation, route }) {
   const fadeAnim = useRef(new Animated.Value(0)).current; 
   const dropdownFadeAnim = useRef(new Animated.Value(0)).current;
 
-  const scheduleExpirationNotifications = async (productName, expirationDate) => {
-    const oneWeekBefore = new Date(expirationDate);
-    oneWeekBefore.setDate(oneWeekBefore.getDate() - 7);
-    oneWeekBefore.setHours(9, 0, 0, 0); 
-  
-    const threeDaysBefore = new Date(expirationDate);
-    threeDaysBefore.setDate(threeDaysBefore.getDate() - 3);
-    threeDaysBefore.setHours(9, 0, 0, 0); 
-  
-    const oneDayBefore = new Date(expirationDate);
-    oneDayBefore.setDate(oneDayBefore.getDate() - 1);
-    oneDayBefore.setHours(9, 0, 0, 0); 
-  
-    const expirationDay = new Date(expirationDate);
-    expirationDay.setHours(9, 0, 0, 0); 
-    
-    console.log(oneWeekBefore, threeDaysBefore, oneDayBefore, expirationDay);
-
-    const scheduleNotification = async (date, message) => {
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title: 'Recordatorio de Vencimiento de Producto',
-          body: message,
-          sound: true,
-          priority: Notifications.AndroidNotificationPriority.HIGH,
-        },
-        trigger: {
-          date,
-        },
-      });
-    };
-  
-    // Schedule notifications
-    await scheduleNotification(oneWeekBefore, `Recordatorio: ${productName} vence en una semana`);
-    await scheduleNotification(threeDaysBefore, `Recordatorio: ${productName} vence en 3 días.`);
-    await scheduleNotification(oneDayBefore, `Recordatorio: ${productName} vence mañana.`);
-    await scheduleNotification(expirationDay, `Recordatorio: ${productName} vence hoy.`);
-  };
 
   const fetchCategories = async () => {
     try {
@@ -211,7 +173,6 @@ export default function AddProduct({ navigation, route }) {
         setModalVisible(true);
   
 
-        await scheduleExpirationNotifications(nombre, fechaVencimiento);
       } else {
         Alert.alert('Error', result.msg || 'Hubo un error al agregar el producto');
       }

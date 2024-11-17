@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -15,9 +15,15 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { LinearGradient } from 'expo-linear-gradient';
 import Swiper from 'react-native-swiper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { checkAndNotifyProducts } from '../services/NotificationService';
+import * as Notifications from 'expo-notifications';
+
 
 export default function PaginaPrincipal({ navigation }) {
   const [userType, setUserType] = useState('');
+  const [notificationPermission, setNotificationPermission] = useState(false);
+
+
   const funcionalidadesAdmin = [
     { nombre: 'Escanear Productos', icono: 'barcode-scan', screen: 'BarcodeScannerPage' },
     { nombre: 'Revisar Inventario', icono: 'archive-outline', screen: 'InventoryScreen' },
@@ -26,6 +32,25 @@ export default function PaginaPrincipal({ navigation }) {
     { nombre: 'Gestionar Usuarios', icono: 'account-multiple-plus-outline', screen: 'UserManagement' },
     { nombre: 'Estadísticas', icono: 'chart-pie', screen: 'DashBoard'  },
     { nombre: 'Perfil', icono: 'account-circle', screen: 'ProfileScreen' },
+    {
+      nombre: 'Test Notificaciones',
+      icono: 'bell-ring',
+      screen: null,
+      onPress: async () => {
+        try {
+          // Simple test notification first
+          
+          
+          // Then try the full product notifications
+          const response = await fetch('http://170.239.85.88:5000/products');
+          const products = await response.json();
+          await checkAndNotifyProducts(products, 'manual-test');
+        } catch (error) {
+          console.error('Error testing notifications:', error);
+          Alert.alert('Error', 'No se pudieron enviar las notificaciones: ' + error.message);
+        }
+      }
+    }
   ];
 
   const funcionalidadesCajero = [
@@ -117,16 +142,22 @@ export default function PaginaPrincipal({ navigation }) {
               {funcionalidades.slice(0, 4).map((func, index) => (
                 <TouchableOpacity
                   key={index}
-                  style={styles.button}
+                  style={[styles.button]}
                   onPress={() => {
-                    if (func.screen) {
+                    
+                    if (func.onPress) {
+                      func.onPress();
+                    } else if (func.screen) {
                       navigation.navigate(func.screen);
                     }
                   }}
                 >
-                  <LinearGradient colors={['#3BCEAC', '#3BCEAC']} style={styles.buttonGradient}>
+                  <LinearGradient 
+                  colors={['#3BCEAC', '#3BCEAC']} style={styles.buttonGradient}
+                  >
                     <Icon name={func.icono} size={28} color="#1A2238" />
-                    <Text style={styles.buttonText}>{func.nombre}</Text>
+                    <Text style={styles.buttonText}>{func.nombre}
+                    </Text>
                   </LinearGradient>
                 </TouchableOpacity>
               ))}
@@ -137,7 +168,9 @@ export default function PaginaPrincipal({ navigation }) {
                   key={index}
                   style={styles.button}
                   onPress={() => {
-                    if (func.screen) {
+                    if (func.onPress) {
+                      func.onPress();
+                    } else if (func.screen) {
                       navigation.navigate(func.screen);
                     }
                   }}

@@ -1,5 +1,6 @@
 {
   "expo": {
+    "jsEngine": "hermes",
     "name": "SellifyGod",
     "slug": "SellifyGod",
     "version": "1.0.0",
@@ -15,13 +16,46 @@
       "supportsTablet": true
     },
     "android": {
+      "jsEngine": "hermes",
+      "permissions":[
+          "RECEIVE_BOOT_COMPLETED",
+          "WAKE_LOCK"
+        ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.dgvipe.SellifyGod"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+        
+      ],
+      [
+        "expo-notifications"
+      ]
+    ],
+    "notification": {
+      "icon": "./assets/LogoRecortado.png",
+      "color": "#ffffff",
+      "androidMode": "default",
+      "androidCollapsedTitle": "Nueva Notificación",
+      "iosDisplayInForeground": true
+    },
+    
+    "extra": {
+      "eas": {
+        "projectId": "5f9e3ec0-9b05-4d85-80b3-6ae5a72d8d7d"
+      }
     }
   }
 }
