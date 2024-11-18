@@ -71,10 +71,10 @@ const checkProducts = async () => {
       const products = await response.json();
       await checkAndNotifyProducts(products, 'auto-check');
       await AsyncStorage.setItem('lastNotificationCheck', now.toString());
-      console.log('Products checked at:', new Date().toLocaleString());
+      //console.log('Products checked at:', new Date().toLocaleString());
     }
   } catch (error) {
-    console.error('Error checking products:', error);
+    //console.error('Error checking products:', error);
   }
 };
 const forceNotificationCheck = async () => {
@@ -83,9 +83,9 @@ const forceNotificationCheck = async () => {
     const response = await fetch('http://170.239.85.88:5000/products');
     const products = await response.json();
     await checkAndNotifyProducts(products);
-    console.log('Force check completed at:', new Date().toLocaleString());
+    //console.log('Force check completed at:', new Date().toLocaleString());
   } catch (error) {
-    console.error('Error in force check:', error);
+    //console.error('Error in force check:', error);
   }
 };
 
@@ -96,7 +96,7 @@ export default function App() {
 
   useEffect(() => {
     registerForPushNotificationsAsync();
-    checkProducts(); // Initial check
+    checkProducts(); 
     const subscription = AppState.addEventListener('change', nextAppState => {
       if (nextAppState === 'active') {
         checkProducts();

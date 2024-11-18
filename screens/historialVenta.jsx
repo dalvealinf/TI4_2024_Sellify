@@ -1,81 +1,114 @@
-import React, { useState } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Button, Platform } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Button, Platform, Alert } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import Icon from 'react-native-vector-icons/Ionicons';
 
-const ventas = [
-    { id: '1', fecha: '2024-09-07', hora: '14:35', total: '$617,000', cajero: 'Juan Pérez', productos: [
-        { id: '1', nombre: 'Iphone X', precio: '$400,000' },
-        { id: '2', nombre: 'Laptop Asus', precio: '$217,000' },
-      ],
-    },
-    { id: '2', fecha: '2024-09-06', hora: '11:20', total: '$1,184,400', cajero: 'María López', productos: [
-        { id: '1', nombre: 'Auriculares BT', precio: '$158,850' },
-        { id: '2', nombre: 'Smartwatch Xiaomi', precio: '$168,600' },
-      ],
-    },
-  ];
-
-// Función para ordenar las ventas por la fecha más reciente
-const ordenarVentasPorFecha = (ventas) => {
-  return ventas.sort((a, b) => {
-    const fechaA = new Date(`${a.fecha}T${a.hora}`);
-    const fechaB = new Date(`${b.fecha}T${b.hora}`);
-    return fechaB - fechaA; // Ordenar de más reciente a más antigua
-  });
-};
-
-// Función para filtrar las ventas por la fecha seleccionada
-const filtrarVentasPorFecha = (ventas, fechaSeleccionada) => {
-  return ventas.filter((venta) => {
-    const fechaVenta = new Date(venta.fecha); // Convertir la fecha de la venta a Date
-    return (
-      fechaVenta.getFullYear() === fechaSeleccionada.getFullYear() &&
-      fechaVenta.getMonth() === fechaSeleccionada.getMonth() &&
-      fechaVenta.getDate() === fechaSeleccionada.getDate()
-    );
-  });
-};
-
 const HistorialVentas = ({ navigation }) => {
-  const [date, setDate] = useState(null); // Fecha seleccionada
-  const [mode, setMode] = useState('date'); // Modo date
+  const [ventas, setVentas] = useState([]); // Datos obtenidos desde la API
+  const [startDate, setStartDate] = useState(null); // Fecha de inicio seleccionada
+  const [endDate, setEndDate] = useState(null); // Fecha de fin seleccionada
+  const [currentPicker, setCurrentPicker] = useState(null); // Controla qué picker está activo (inicio o fin)
   const [show, setShow] = useState(false); // Mostrar el calendario
-  const [filteredVentas, setFilteredVentas] = useState(ventas);
+  const [filteredVentas, setFilteredVentas] = useState([]); // Ventas filtradas
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
 
-  // Función que maneja el cambio cuando se selecciona una fecha
-  const onChange = (event, selectedDate) => {
-    const currentDate = selectedDate || date;
-    setShow(Platform.OS === 'ios'); // Solución para que el calendario se cierre correctamente
-    setDate(currentDate);
+  // Función para obtener las ventas desde la API
+  const fetchVentas = async (fechaInicio = null, fechaFin = null) => {
+    try {
+      let url = 'http://170.239.85.88:5000/ventas';
 
-    // Filtrar las ventas según la fecha seleccionada
-    const ventasFiltradas = filtrarVentasPorFecha(ventas, currentDate);
-    setFilteredVentas(ventasFiltradas);
+      // Agregar parámetros de fecha si existen
+      if (fechaInicio || fechaFin) {
+        const params = new URLSearchParams();
+        if (fechaInicio) params.append('fecha_inicio', fechaInicio);
+        if (fechaFin) params.append('fecha_fin', fechaFin);
+        url += `?${params.toString()}`;
+      }
+
+      const response = await fetch(url);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.msg || 'Error al obtener las ventas');
+      }
+
+      const data = await response.json();
+      setVentas(data); // Guardar las ventas
+      setFilteredVentas(data); // Se muestran todas las ventas al comienzo
+    } catch (error) {
+      Alert.alert('Error', error.message || 'Ocurrió un error al obtener las ventas');
+    }
   };
 
-  // Función para mostrar el calendario para seleccionar la fecha
-  const showMode = (currentMode) => {
-    setShow(true);
-    setMode(currentMode);
+  useEffect(() => {
+    // Obtener todas las ventas al cargar la pantalla
+    fetchVentas();
+  }, []);
+
+  // Función para manejar la selección de fechas
+  const showPicker = useCallback((pickerType) => {
+    if (!isPickerOpen) {
+      setCurrentPicker(pickerType);
+      setShow(true);
+      setIsPickerOpen(true);
+    }
+  }, [isPickerOpen]);
+  
+  const onChange = useCallback((event, selectedDate) => {
+    if (Platform.OS === "android" && event.type === "dismissed") {
+      setShow(false);
+      setIsPickerOpen(false);
+      return;
+    }
+  
+    if (selectedDate) {
+      if (currentPicker === "start") {
+        setStartDate(selectedDate);
+      } else if (currentPicker === "end") {
+        setEndDate(selectedDate);
+      }
+    }
+  
+    setShow(false);
+    setIsPickerOpen(false);
+  }, [currentPicker]);
+
+  // Función para aplicar el filtro con las fechas seleccionadas
+  const aplicarFiltro = () => {
+    if (!startDate || !endDate) {
+      Alert.alert('Error', 'Por favor selecciona ambas fechas.');
+      return;
+    }
+
+    const fechaInicio = startDate.toISOString().split('T')[0];
+    const fechaFin = endDate.toISOString().split('T')[0];
+    fetchVentas(fechaInicio, fechaFin);
   };
 
   // Función para limpiar el filtro de ventas
   const limpiarFiltro = () => {
-    setDate(null);
-    setFilteredVentas(ventas);
+    setStartDate(null);
+    setEndDate(null);
+    fetchVentas(); // Cargar todas las ventas
   };
 
-  // Ordenar las ventas antes de mostrarlas
-  const ventasOrdenadas = ordenarVentasPorFecha(filteredVentas);
+  // Función para formatear la fecha
+  const formatFecha = (fecha) => {
+    const date = new Date(fecha);
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear().toString().slice(-2);
+    return `${day}/${month}/${year}`;
+  };
 
+  // Función para renderizar una venta
   const renderVenta = ({ item }) => (
     <TouchableOpacity
       style={styles.ventaContainer}
-      onPress={() => navigation.navigate('DetalleVenta', { venta: item })}  // Pasar la venta seleccionada
+      onPress={() => navigation.navigate("DetalleVenta", { venta: { id: item.id_venta, cajero: item.id_cajero, total: item.total_con_iva } })} // Enviar id de venta y otros datos
     >
-      <Text style={styles.fecha}>{item.fecha} {item.hora}</Text>
-      <Text style={styles.total}>Total: {item.total}</Text>
+      <Text style={styles.fecha}>{formatFecha(item.fecha_venta)}</Text>
+      <Text style={styles.total}>Total sin IVA: ${item.total_sin_iva}</Text>
+      <Text style={styles.total}>Total con IVA: ${item.total_con_iva}</Text>
     </TouchableOpacity>
   );
 
@@ -89,31 +122,37 @@ const HistorialVentas = ({ navigation }) => {
       </View>
 
       <View style={styles.inputContainer}>
-  <TouchableOpacity style={styles.dateButton} onPress={() => showMode('date')}>
-    <Text style={styles.dateButtonText}>Seleccionar Fecha</Text>
-  </TouchableOpacity>
-  <Text style={styles.selectedDate}>
-    {date ? `Fecha seleccionada: ${date.toLocaleDateString()}` : 'Ninguna fecha seleccionada'}
-  </Text>
-</View>
+        <TouchableOpacity style={styles.dateButton} onPress={() => showPicker('start')}>
+          <Text style={styles.dateButtonText}>
+            {startDate ? `Inicio: ${formatFecha(startDate)}` : 'Seleccionar Fecha de Inicio'}
+          </Text>
+        </TouchableOpacity>
 
-      <View style={styles.clearButtonContainer}>
+        <TouchableOpacity style={styles.dateButton} onPress={() => showPicker('end')}>
+          <Text style={styles.dateButtonText}>
+            {endDate ? `Fin: ${formatFecha(endDate)}` : 'Seleccionar Fecha de Fin'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.buttonContainer}>
+        <Button onPress={aplicarFiltro} title="Aplicar Filtro" color="#3BCEAC" />
         <Button onPress={limpiarFiltro} title="Limpiar Filtro" color="#FF6B6B" />
       </View>
 
       {show && (
         <DateTimePicker
-          value={date || new Date()}
-          mode={mode}
-          is24Hour={true}
-          display="default"
-          onChange={onChange}
-        />
+        value={currentPicker === 'start' ? startDate || new Date() : endDate || new Date()}
+        mode="date"
+        is24Hour={true}
+        display="default"
+        onChange={onChange}
+      />
       )}
 
       <FlatList
-        data={ventasOrdenadas}
-        keyExtractor={item => item.id}
+        data={filteredVentas}
+        keyExtractor={(item) => item.id_venta.toString()}
         renderItem={renderVenta}
         style={styles.listaVentas}
       />
@@ -154,18 +193,16 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 5,
     alignItems: 'center',
+    marginBottom: 10,
   },
   dateButtonText: {
     color: '#1A2238',
     fontWeight: 'bold',
     fontSize: 16,
   },
-  selectedDate: {
-    color: '#F5F6Fa',
-    marginTop: 10,
-    fontSize: 16,
-  },
-  clearButtonContainer: {
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginVertical: 10,
   },
   listaVentas: {
