@@ -59,6 +59,7 @@ export default function AddUserScreen({ navigation }) {
   };
 
   return (
+    <View style={styles.screen}>
     <ScrollView contentContainerStyle={styles.scrollContainer}>
       <View style={styles.container}>
         <View style={styles.header}>
@@ -140,19 +141,25 @@ export default function AddUserScreen({ navigation }) {
         {/* Selección de Rol */}
         <Text style={styles.roleLabel}>Rol</Text>
         <View style={styles.roleContainer}>
-          <TouchableOpacity
-            style={[styles.roleButton, role === 'user' ? styles.activeRoleButton : null]}
-            onPress={() => setRole('user')}
-          >
-            <Text style={[styles.roleText, role === 'user' ? styles.activeRoleText : null]}>Vendedor</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.roleButton, role === 'admin' ? styles.activeRoleButton : null]}
-            onPress={() => setRole('admin')}
-          >
-            <Text style={[styles.roleText, role === 'admin' ? styles.activeRoleText : null]}>Administrador</Text>
-          </TouchableOpacity>
-        </View>
+              <TouchableOpacity
+                style={[styles.roleButton, role === 'user' ? styles.activeRoleButton : null]}
+                onPress={() => setRole('user')}
+              >
+                <Text style={[styles.roleText, role === 'user' ? styles.activeRoleText : null]}>Vendedor</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.roleButton, role === 'admin' ? styles.activeRoleButton : null]}
+                onPress={() => setRole('admin')}
+              >
+                <Text style={[styles.roleText, role === 'admin' ? styles.activeRoleText : null]}>Administrador</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.roleButton, role === 'cliente' ? styles.activeRoleButton : null]}
+                onPress={() => setRole('cliente')}
+              >
+                <Text style={[styles.roleText, role === 'cliente' ? styles.activeRoleText : null]}>Cliente</Text>
+              </TouchableOpacity>
+            </View>
 
         {/* Switch de Usuario Activo */}
         <View style={styles.switchContainer}>
@@ -180,10 +187,15 @@ export default function AddUserScreen({ navigation }) {
         )}
       </View>
     </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: '#1A2238',
+  },
   scrollContainer: {
     flexGrow: 1,
     justifyContent: 'center',
@@ -250,6 +262,8 @@ const styles = StyleSheet.create({
     borderColor: '#fff',
     marginHorizontal: 5,
     alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 100,
   },
   activeRoleButton: {
     backgroundColor: '#FF6B6B',
@@ -257,7 +271,8 @@ const styles = StyleSheet.create({
   },
   roleText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 13, // Tamaño del texto del globo de tipo de usuario
+    textAlign: 'center',
   },
   activeRoleText: {
     color: '#fff',

@@ -86,6 +86,7 @@ export default function EditUserScreen() {
   };
 
   return (
+    <View style={styles.screen}>
     <ScrollView contentContainerStyle={styles.scrollContainer}>
       <View style={styles.container}>
         <View style={styles.header}>
@@ -202,10 +203,15 @@ export default function EditUserScreen() {
         )}
       </View>
     </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: '#1A2238',
+  },
   scrollContainer: {
     flexGrow: 1,
     justifyContent: 'center',

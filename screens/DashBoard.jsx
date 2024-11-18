@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   SafeAreaView,
   View,
@@ -8,48 +8,152 @@ import {
   TextInput,
   TouchableOpacity,
   useWindowDimensions,
-  ToastAndroid, // Importamos ToastAndroid para Android (para iOS usar Alert)
+  ToastAndroid,
   Platform,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
-import {
-  BarChart,
-  LineChart,
-  PieChart,
-} from 'react-native-chart-kit';
 import { Ionicons } from '@expo/vector-icons';
-
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
-
-const salesData = [
-  { name: 'Ene', ventas: 4000, prediccion: 3800 },
-  { name: 'Feb', ventas: 3000, prediccion: 3200 },
-  { name: 'Mar', ventas: 5000, prediccion: 4800 },
-  { name: 'Abr', ventas: 4500, prediccion: 4700 },
-  { name: 'May', ventas: 6000, prediccion: 5800 },
-  { name: 'Jun', ventas: 5500, prediccion: 5700 },
-];
-
-const categoryData = [
-  { name: 'Electrónicos', value: 400 },
-  { name: 'Ropa', value: 300 },
-  { name: 'Alimentos', value: 300 },
-  { name: 'Hogar', value: 200 },
-];
-
-const productPredictions = [
-  { name: 'Smartphone X', probabilidad: 0.85 },
-  { name: 'Laptop Y', probabilidad: 0.72 },
-  { name: 'Tablet Z', probabilidad: 0.68 },
-  { name: 'Smartwatch A', probabilidad: 0.61 },
-  { name: 'Auriculares B', probabilidad: 0.57 },
-];
+import { LineChart } from 'react-native-chart-kit';
 
 export default function ResponsiveDashboard({ navigation }) {
   const { width } = useWindowDimensions();
-  const chartWidth = width - 40; // Ajusta según el padding total (20 * 2)
+  const chartWidth = width - 40; 
+  const [ventas, setVentas] = useState([]);
+  const [detalleVentas, setDetalleVentas] = useState([]);
+  const [clientes, setClientes] = useState([]);
+  const [totalVentas, setTotalVentas] = useState(0);
+  const [productosVendidos, setProductosVendidos] = useState(0);
+  const [cantidadClientesNuevos, setCantidadClientesNuevos] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [ventasPorPeriodo, setVentasPorPeriodo] = useState([]);
+  const [predicciones, setPredicciones] = useState([]);
 
-  // Función para manejar clics en puntos de datos
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Obtener ventas
+        const ventasResponse = await fetch('http://170.239.85.88:5000/ventas');
+        const ventasData = await ventasResponse.json();
+        setVentas(ventasData);
+
+        // Calcular total de ventas
+        const totalVentasCalculado = ventasData.reduce((acc, venta) => acc + venta.total_con_iva, 0);
+        setTotalVentas(totalVentasCalculado);
+
+        // Obtener detalle de ventas
+        const detalleVentasResponse = await fetch('http://170.239.85.88:5000/detalleventa');
+        const detalleVentasData = await detalleVentasResponse.json();
+        setDetalleVentas(detalleVentasData);
+
+        // Calcular productos vendidos
+        const totalProductosVendidos = detalleVentasData.reduce((acc, detalle) => acc + detalle.cantidad, 0);
+        setProductosVendidos(totalProductosVendidos);
+
+        // Obtener clientes (asumiendo que el tipo de usuario para clientes es 'cliente')
+        const clientesResponse = await fetch('http://170.239.85.88:5000/users?tipo_usuario=cliente');
+        const clientesData = await clientesResponse.json();
+        setClientes(clientesData);
+
+        // Calcular cantidad de clientes nuevos (puedes ajustar el filtro según tus necesidades)
+        setCantidadClientesNuevos(clientesData.length);
+
+        // Agrupar ventas cada 4 meses
+        const ventasPorPeriodoCalculadas = agruparVentasPorPeriodo(ventasData);
+        setVentasPorPeriodo(ventasPorPeriodoCalculadas);
+
+        // Generar predicciones
+        const prediccionesCalculadas = generarPredicciones(ventasPorPeriodoCalculadas);
+        setPredicciones(prediccionesCalculadas);
+
+      } catch (error) {
+        console.error('Error al obtener datos de la API:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  // Función para agrupar ventas cada 4 meses
+  const agruparVentasPorPeriodo = (ventasData) => {
+    // Ordenar ventas por fecha
+    const ventasOrdenadas = ventasData.sort((a, b) => new Date(a.fecha_venta) - new Date(b.fecha_venta));
+
+    // Inicializar variables
+    const ventasPorPeriodo = [];
+    let inicioPeriodo = new Date(ventasOrdenadas[0].fecha_venta);
+    let totalPeriodo = 0;
+    let contadorMeses = 0;
+
+    ventasOrdenadas.forEach((venta) => {
+      const fechaVenta = new Date(venta.fecha_venta);
+      const diferenciaMeses = (fechaVenta.getFullYear() - inicioPeriodo.getFullYear()) * 12 + (fechaVenta.getMonth() - inicioPeriodo.getMonth());
+
+      if (diferenciaMeses < 4) {
+        totalPeriodo += venta.total_con_iva;
+      } else {
+        ventasPorPeriodo.push(totalPeriodo);
+        inicioPeriodo = fechaVenta;
+        totalPeriodo = venta.total_con_iva;
+      }
+    });
+    // Añadir el último período
+    ventasPorPeriodo.push(totalPeriodo);
+
+    return ventasPorPeriodo;
+  };
+
+  // Función para generar predicciones
+  const generarPredicciones = (ventasPorPeriodo) => {
+    if (ventasPorPeriodo.length < 2) {
+      // No hay suficientes datos para calcular tasas de crecimiento
+      return [];
+    }
+
+    const predicciones = [];
+    // Cálculo de la tasa de crecimiento promedio
+    let tasasCrecimiento = [];
+    for (let i = 1; i < ventasPorPeriodo.length; i++) {
+      const ventaActual = ventasPorPeriodo[i];
+      const ventaAnterior = ventasPorPeriodo[i - 1];
+      // Evitar división por cero
+      if (ventaAnterior !== 0) {
+        const tasa = (ventaActual - ventaAnterior) / ventaAnterior;
+        tasasCrecimiento.push(tasa);
+      } else {
+        // Si la venta anterior es cero, asumimos una tasa de crecimiento del 100%
+        tasasCrecimiento.push(1);
+      }
+    }
+
+    let tasaCrecimientoPromedio = 0;
+    if (tasasCrecimiento.length > 0) {
+      tasaCrecimientoPromedio = tasasCrecimiento.reduce((a, b) => a + b, 0) / tasasCrecimiento.length;
+    } else {
+      // Si no se pueden calcular tasas de crecimiento, asumimos crecimiento cero
+      tasaCrecimientoPromedio = 0;
+    }
+
+    // Generar predicciones para los próximos períodos
+    let ultimoValor = ventasPorPeriodo[ventasPorPeriodo.length - 1];
+    for (let i = 0; i < 3; i++) {
+      ultimoValor = ultimoValor * (1 + tasaCrecimientoPromedio);
+      predicciones.push(ultimoValor);
+    }
+    return predicciones;
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#48BB78" />
+      </View>
+    );
+  }
+
+  // Ejemplo de función para manejar clics en puntos de datos
   const handleDataPointClick = (data) => {
     const message = `Valor: ${data.value} en ${data.dataset.label || data.label}`;
     if (Platform.OS === 'android') {
@@ -70,7 +174,7 @@ export default function ResponsiveDashboard({ navigation }) {
           >
             <Ionicons name="arrow-back" size={24} color="#3BCEAC" />
           </TouchableOpacity>
-          <Text style={styles.title}>Dashboard de Ventas</Text>
+          <Text style={styles.title}>Dashboard</Text>
           <View style={styles.headerIcons}>
             <Ionicons
               name="notifications-outline"
@@ -80,9 +184,7 @@ export default function ResponsiveDashboard({ navigation }) {
             />
             <Ionicons
               name="settings-outline"
-              size={24}
-              color="#3BCEAC"
-              style={styles.icon}
+              size={24} color="#3BCEAC" style={styles.icon}
             />
           </View>
         </View>
@@ -99,175 +201,86 @@ export default function ResponsiveDashboard({ navigation }) {
 
         {/* Tarjetas */}
         <View style={styles.cardContainer}>
-          {/* Tarjeta 1 */}
           <View style={styles.card}>
             <View style={styles.cardHeader}>
               <Text style={styles.cardTitle}>Ventas Totales</Text>
               <Ionicons name="cash-outline" size={20} color="#3BCEAC" />
             </View>
-            <Text style={styles.cardValue}>$45,231.89</Text>
-            <Text style={styles.cardSubtitle}>+20.1% del mes pasado</Text>
+            <Text style={styles.cardValue}>${totalVentas.toFixed(2)}</Text>
           </View>
-          {/* Tarjeta 2 */}
           <View style={styles.card}>
             <View style={styles.cardHeader}>
               <Text style={styles.cardTitle}>Productos Vendidos</Text>
               <Ionicons name="cube-outline" size={20} color="#3BCEAC" />
             </View>
-            <Text style={styles.cardValue}>1,234</Text>
-            <Text style={styles.cardSubtitle}>+15% del mes pasado</Text>
+            <Text style={styles.cardValue}>{productosVendidos}</Text>
           </View>
-          {/* Tarjeta 3 */}
           <View style={styles.card}>
             <View style={styles.cardHeader}>
               <Text style={styles.cardTitle}>Nuevos Clientes</Text>
               <Ionicons name="people-outline" size={20} color="#3BCEAC" />
             </View>
-            <Text style={styles.cardValue}>321</Text>
-            <Text style={styles.cardSubtitle}>+5% del mes pasado</Text>
+            <Text style={styles.cardValue}>{cantidadClientesNuevos}</Text>
           </View>
         </View>
 
         {/* Gráfico de Tendencia de Ventas vs Predicción */}
         <View style={styles.chartContainer}>
           <Text style={styles.chartTitle}>Tendencia de Ventas vs Predicción</Text>
-          <View style={styles.chartWrapper}>
-            <LineChart
-              data={{
-                labels: salesData.map((item) => item.name),
-                datasets: [
-                  {
-                    data: salesData.map((item) => item.ventas),
-                    color: (opacity = 1) => `rgba(59, 206, 172, ${opacity})`,
-                    strokeWidth: 2,
-                    label: 'Ventas',
-                  },
-                  {
-                    data: salesData.map((item) => item.prediccion),
-                    color: (opacity = 1) => `rgba(255, 128, 66, ${opacity})`,
-                    strokeWidth: 2,
-                    label: 'Predicción',
-                  },
-                ],
-                legend: ['Ventas', 'Predicción'],
-              }}
-              width={chartWidth}
-              height={220}
-              chartConfig={{
-                backgroundColor: '#1A2238',
-                backgroundGradientFrom: '#1A2238',
-                backgroundGradientTo: '#1A2238',
-                decimalPlaces: 0,
-                color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-                labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-                style: {
-                  borderRadius: 16,
+          <LineChart
+            data={{
+              labels: ventasPorPeriodo.map((_, index) => `P${index + 1}`),
+              datasets: [
+                {
+                  data: ventasPorPeriodo,
+                  color: (opacity = 1) => `rgba(59, 206, 172, ${opacity})`,
+                  strokeWidth: 2,
                 },
-                propsForDots: {
-                  r: '3',
-                  strokeWidth: '1',
-                  stroke: '#ffa726',
+                {
+                  data: predicciones,
+                  color: (opacity = 1) => `rgba(255, 140, 0, ${opacity})`,
+                  strokeWidth: 2,
+                  withDots: true,
                 },
-              }}
-              bezier
-              style={styles.chart}
-              onDataPointClick={handleDataPointClick}
-            />
-          </View>
+              ],
+            }}
+            width={chartWidth}
+            height={220}
+            chartConfig={{
+              backgroundColor: '#1A2238',
+              backgroundGradientFrom: '#1A2238',
+              backgroundGradientTo: '#1A2238',
+              decimalPlaces: 2,
+              color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+              labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+              style: {
+                borderRadius: 16,
+              },
+            }}
+            bezier
+            style={{
+              marginVertical: 8,
+              borderRadius: 16,
+            }}
+          />
         </View>
 
         {/* Gráfico de Distribución de Ventas por Categoría */}
         <View style={styles.chartContainer}>
           <Text style={styles.chartTitle}>Distribución de Ventas por Categoría</Text>
-          <View style={styles.chartWrapper}>
-            <PieChart
-              data={categoryData.map((item, index) => ({
-                name: item.name,
-                population: item.value,
-                color: COLORS[index],
-                legendFontColor: '#FFF',
-                legendFontSize: 12,
-              }))}
-              width={chartWidth}
-              height={220}
-              chartConfig={{
-                backgroundColor: '#1A2238',
-                backgroundGradientFrom: '#1A2238',
-                backgroundGradientTo: '#1A2238',
-                color: (opacity = 1) => `rgba(59, 206, 172, ${opacity})`,
-              }}
-              accessor="population"
-              backgroundColor="transparent"
-              paddingLeft="15"
-              absolute
-              // Interactividad en PieChart no está directamente soportada
-            />
-          </View>
+          {/* Gráfico aquí */}
         </View>
 
         {/* Gráfico de Ventas Mensuales */}
         <View style={styles.chartContainer}>
           <Text style={styles.chartTitle}>Ventas Mensuales</Text>
-          <View style={styles.chartWrapper}>
-            <BarChart
-              data={{
-                labels: salesData.map((item) => item.name),
-                datasets: [
-                  {
-                    data: salesData.map((item) => item.ventas),
-                    color: (opacity = 1) => `rgba(59, 206, 172, ${opacity})`,
-                    label: 'Ventas',
-                  },
-                  {
-                    data: salesData.map((item) => item.prediccion),
-                    color: (opacity = 1) => `rgba(255, 128, 66, ${opacity})`,
-                    label: 'Predicción',
-                  },
-                ],
-                legend: ['Ventas', 'Predicción'],
-              }}
-              width={chartWidth}
-              height={220}
-              fromZero
-              chartConfig={{
-                backgroundColor: '#1A2238',
-                backgroundGradientFrom: '#1A2238',
-                backgroundGradientTo: '#1A2238',
-                decimalPlaces: 0,
-                color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-                labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-                barPercentage: 0.5,
-              }}
-              style={styles.chart}
-              onDataPointClick={handleDataPointClick}
-            />
-          </View>
+          {/* Gráfico aquí */}
         </View>
 
         {/* Predicción de Ventas de Productos */}
         <View style={styles.chartContainer}>
           <Text style={styles.chartTitle}>Predicción de Ventas de Productos (ML)</Text>
-          <View style={styles.chartWrapper}>
-            {productPredictions.map((item, index) => (
-              <View key={index} style={styles.productRow}>
-                <Text style={styles.productName}>{item.name}</Text>
-                <View style={styles.progressBarBackground}>
-                  <View
-                    style={[
-                      styles.progressBarFill,
-                      {
-                        width: `${item.probabilidad * 100}%`,
-                        backgroundColor: COLORS[index % COLORS.length],
-                      },
-                    ]}
-                  />
-                </View>
-                <Text style={styles.productProbability}>
-                  {(item.probabilidad * 100).toFixed(0)}%
-                </Text>
-              </View>
-            ))}
-          </View>
+          {/* Contenido aquí */}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -281,7 +294,7 @@ const styles = StyleSheet.create({
   },
   container: {
     backgroundColor: '#1A2238',
-    paddingHorizontal: 10, // Aumentado de 15 a 20
+    paddingHorizontal: 10,
     paddingBottom: 20,
   },
   header: {
@@ -311,12 +324,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#2D3A59',
     borderRadius: 8,
     alignItems: 'center',
-    marginBottom: "10%",
-    paddingHorizontal: "5%",
-    height: "3%",
+    marginBottom: 20, // Reemplazado el porcentaje por un número
+    paddingHorizontal: 15, // Reemplazado el porcentaje por un número
+    height: 40, // Reemplazado el porcentaje por un número
   },
   searchIcon: {
-    marginRight: "2%",
+    marginRight: 10, // Reemplazado el porcentaje por un número
   },
   searchInput: {
     flex: 1,
@@ -343,22 +356,10 @@ const styles = StyleSheet.create({
     color: 'white',
     flexShrink: 1,
   },
-  cardValue: {
-    fontSize: 24,
-    color: 'white',
-    fontWeight: 'bold',
-    marginVertical: 5,
-    flexShrink: 1,
-  },
-  cardSubtitle: {
-    fontSize: 12,
-    color: '#3BCEAC',
-    flexShrink: 1,
-  },
   chartContainer: {
     backgroundColor: '#2D3A59',
     borderRadius: 8,
-    padding: 20, // Aumentado para más espacio interno
+    padding: 20,
     marginBottom: 20,
     width: '100%',
   },
@@ -369,95 +370,15 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     flexShrink: 1,
   },
-  chartWrapper: {
-    padding: 10, // Añade padding alrededor del gráfico
-  },
-  chart: {
-    alignSelf: 'center',
-    borderRadius: 16,
-  },
-  productRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-    flexWrap: 'wrap',
-  },
-  productName: {
-    flex: 1,
-    color: 'white',
-    flexShrink: 1,
-  },
-  progressBarBackground: {
-    flex: 2,
-    height: 10,
-    backgroundColor: '#D1D1D1',
-    borderRadius: 5,
-    marginHorizontal: 10,
-  },
-  progressBarFill: {
-    height: 10,
-    borderRadius: 5,
-  },
-  productProbability: {
-    minWidth: 50,
-    color: 'white',
-    textAlign: 'right',
-  },
- filterContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  filterLabel: {
-    color: 'white',
-    marginRight: 10,
-  },
-  datePickerButton: {
-    backgroundColor: '#2D3A59',
-    padding: 10,
-    borderRadius: 8,
-    marginRight: 20,
-  },
-  datePickerText: {
-    color: 'white',
-  },
-  actionButtonsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-  },
-  modalOverlay: {
+  loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 22,
-    backgroundColor: 'rgba(0,0,0,0.5)',
   },
-  modalContent: {
-    backgroundColor: '#2D3A59',
-    borderRadius: 8,
-    padding: 20,
-    alignItems: 'center',
-    width: '80%',
-  },
-  modalTitle: {
-    fontSize: 20,
+  cardValue: {
+    fontSize: 24,
     color: 'white',
-    marginBottom: 15,
-    fontWeight: 'bold',
-  },
-  modalText: {
-    color: 'white',
-    marginBottom: 10,
-  },
-  modalButton: {
-    backgroundColor: '#3BCEAC',
-    padding: 10,
-    borderRadius: 8,
-    marginTop: 15,
-  },
-  modalButtonText: {
-    color: '#1A2238',
+    marginTop: 10,
     fontWeight: 'bold',
   },
 });
