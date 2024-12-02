@@ -184,10 +184,5 @@ Flask es un microframework de Python que se utiliza para desarrollar APIs de man
 3. **Funciones adicionales**:
    - Añadir funcionalidades basadas en las necesidades de las PYMES, como reportes de inventario, alertas de stock bajo, y más.
 
-## **Contribuciones**
-Las contribuciones son bienvenidas. Por favor, abre un *pull request* o crea una *issue* si tienes sugerencias o encuentras algún problema.
-
-## **Licencia**
-Este proyecto está licenciado bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) para más detalles.
 
 ---
