@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Animated, View, Text, TextInput, Image, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { Animated, View, Text, TextInput, Image, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator, Alert, Modal } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Menu, Divider, Provider } from 'react-native-paper';
@@ -13,6 +13,10 @@ export default function UserManagement() {
   const [error, setError] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const navigation = useNavigation();
+  const [confirmModalVisible, setConfirmModalVisible] = useState(false);
+  const [errorModalVisible, setErrorModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
+  const [userToDeactivate, setUserToDeactivate] = useState(null);
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -68,45 +72,38 @@ export default function UserManagement() {
   };
 
   const handleDeactivateUser = async (rut, estadoActual) => {
-    // Verificar si el estado actual del usuario ya es "inactivo"
     if (estadoActual === 'inactivo') {
-      Alert.alert('Usuario ya inactivo', 'Este usuario ya está inactivo.');
+      setModalMessage('Este usuario ya está inactivo.');
+      setErrorModalVisible(true);
       return;
     }
-  
-    // Mostrar alerta de confirmación
-    Alert.alert(
-      'Confirmar desactivación',
-      '¿Estás seguro de que deseas desactivar a este usuario?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Sí, desactivar',
-          onPress: async () => {
-            try {
-              const response = await fetch(`http://170.239.85.88:5000/users/${rut}`, {
-                method: 'DELETE',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-              });
-  
-              if (response.ok) {
-                Alert.alert('Usuario desactivado', 'El usuario ha sido desactivado exitosamente.');
-                // Refrescar la lista de usuarios después de la desactivación
-                fetchUsersFromAPI();
-              } else {
-                const errorData = await response.json();
-                Alert.alert('Error', errorData.message || 'Ocurrió un error al desactivar al usuario.');
-              }
-            } catch (error) {
-              Alert.alert('Error', 'No se pudo desactivar al usuario. Inténtalo nuevamente.');
-            }
-          },
+    
+    setUserToDeactivate(rut);
+    setConfirmModalVisible(true);
+  };
+
+  const confirmDeactivation = async () => {
+    try {
+      const response = await fetch(`http://170.239.85.88:5000/users/${userToDeactivate}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
         },
-      ],
-      { cancelable: true }
-    );
+      });
+
+      if (response.ok) {
+        setModalMessage('El usuario ha sido desactivado exitosamente.');
+        fetchUsersFromAPI();
+      } else {
+        const errorData = await response.json();
+        setModalMessage(errorData.message || 'Ocurrió un error al desactivar al usuario.');
+        setErrorModalVisible(true);
+      }
+    } catch (error) {
+      setModalMessage('No se pudo desactivar al usuario. Inténtalo nuevamente.');
+      setErrorModalVisible(true);
+    }
+    setConfirmModalVisible(false);
   };
 
   return (
@@ -224,6 +221,55 @@ export default function UserManagement() {
           </ScrollView>
         )}
       </View>
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={confirmModalVisible}
+        onRequestClose={() => setConfirmModalVisible(false)}
+      >
+        <View style={styles.modalBackground}>
+          <View style={styles.modalContainer}>
+            <Icon name="alert-triangle" size={60} color="#FF6B6B" />
+            <Text style={styles.modalTitle}>Confirmar desactivación</Text>
+            <Text style={styles.modalMessage}>¿Estás seguro de que deseas desactivar a este usuario?</Text>
+            <View style={styles.modalButtonContainer}>
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.confirmButton]}
+                onPress={confirmDeactivation}
+              >
+                <Text style={styles.modalButtonText}>Confirmar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => setConfirmModalVisible(false)}
+              >
+                <Text style={styles.modalButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={errorModalVisible}
+        onRequestClose={() => setErrorModalVisible(false)}
+      >
+        <View style={styles.modalBackground}>
+          <View style={styles.modalContainer}>
+            <Icon name="alert-circle" size={60} color="#FF6B6B" />
+            <Text style={styles.modalTitle}>Error</Text>
+            <Text style={styles.modalMessage}>{modalMessage}</Text>
+            <TouchableOpacity 
+              style={[styles.modalButton, styles.errorButton]}
+              onPress={() => setErrorModalVisible(false)}
+            >
+              <Text style={styles.modalButtonText}>Cerrar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </Provider>
   );
 }
@@ -367,5 +413,56 @@ const styles = StyleSheet.create({
     backgroundColor: '#FF6B6B',
     padding: 10,
     borderRadius: 8,
+  },
+  modalBackground: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContainer: {
+    backgroundColor: '#2D3A59',
+    borderRadius: 10,
+    padding: 20,
+    alignItems: 'center',
+    width: '80%',
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 10,
+  },
+  modalMessage: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  modalButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  modalButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    minWidth: '45%',
+  },
+  confirmButton: {
+    backgroundColor: '#FF6B6B',
+  },
+  cancelButton: {
+    backgroundColor: '#3BCEAC',
+  },
+  errorButton: {
+    backgroundColor: '#FF6B6B',
+    minWidth: '100%',
+  },
+  modalButtonText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
 });

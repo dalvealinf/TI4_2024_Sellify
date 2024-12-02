@@ -12,6 +12,7 @@ import {
   Platform,
   Alert,
   ActivityIndicator,
+  Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LineChart } from 'react-native-chart-kit';
@@ -28,6 +29,8 @@ export default function ResponsiveDashboard({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [ventasPorPeriodo, setVentasPorPeriodo] = useState([]);
   const [predicciones, setPredicciones] = useState([]);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -156,11 +159,8 @@ export default function ResponsiveDashboard({ navigation }) {
   // Ejemplo de función para manejar clics en puntos de datos
   const handleDataPointClick = (data) => {
     const message = `Valor: ${data.value} en ${data.dataset.label || data.label}`;
-    if (Platform.OS === 'android') {
-      ToastAndroid.show(message, ToastAndroid.SHORT);
-    } else {
-      Alert.alert('Información del Punto', message);
-    }
+    setModalMessage(message);
+    setModalVisible(true);
   };
 
   return (
@@ -283,6 +283,27 @@ export default function ResponsiveDashboard({ navigation }) {
           {/* Contenido aquí */}
         </View>
       </ScrollView>
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalBackground}>
+          <View style={styles.modalContainer}>
+            <Ionicons name="information-circle" size={60} color="#3BCEAC" />
+            <Text style={styles.modalTitle}>Información del Punto</Text>
+            <Text style={styles.modalMessage}>{modalMessage}</Text>
+            <TouchableOpacity 
+              style={styles.modalButton}
+              onPress={() => setModalVisible(false)}
+            >
+              <Text style={styles.modalButtonText}>Cerrar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -379,6 +400,41 @@ const styles = StyleSheet.create({
     fontSize: 24,
     color: 'white',
     marginTop: 10,
+    fontWeight: 'bold',
+  },
+  modalBackground: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContainer: {
+    backgroundColor: '#2D3A59',
+    borderRadius: 10,
+    padding: 20,
+    alignItems: 'center',
+    width: '80%',
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 10,
+  },
+  modalMessage: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  modalButton: {
+    backgroundColor: '#3BCEAC',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+  },
+  modalButtonText: {
+    color: '#FFFFFF',
     fontWeight: 'bold',
   },
 });

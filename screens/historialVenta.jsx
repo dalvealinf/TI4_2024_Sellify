@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Button, Platform, Alert } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Button, Platform, Alert, Modal } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import Icon from 'react-native-vector-icons/Ionicons';
 
@@ -11,6 +11,8 @@ const HistorialVentas = ({ navigation }) => {
   const [show, setShow] = useState(false); // Mostrar el calendario
   const [filteredVentas, setFilteredVentas] = useState([]); // Ventas filtradas
   const [isPickerOpen, setIsPickerOpen] = useState(false);
+  const [errorModalVisible, setErrorModalVisible] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   // Función para obtener las ventas desde la API
   const fetchVentas = async (fechaInicio = null, fechaFin = null) => {
@@ -35,7 +37,8 @@ const HistorialVentas = ({ navigation }) => {
       setVentas(data); // Guardar las ventas
       setFilteredVentas(data); // Se muestran todas las ventas al comienzo
     } catch (error) {
-      Alert.alert('Error', error.message || 'Ocurrió un error al obtener las ventas');
+      setErrorMessage(error.message || 'Ocurrió un error al obtener las ventas');
+      setErrorModalVisible(true);
     }
   };
 
@@ -75,7 +78,8 @@ const HistorialVentas = ({ navigation }) => {
   // Función para aplicar el filtro con las fechas seleccionadas
   const aplicarFiltro = () => {
     if (!startDate || !endDate) {
-      Alert.alert('Error', 'Por favor selecciona ambas fechas.');
+      setErrorMessage('Por favor selecciona ambas fechas.');
+      setErrorModalVisible(true);
       return;
     }
 
@@ -156,6 +160,27 @@ const HistorialVentas = ({ navigation }) => {
         renderItem={renderVenta}
         style={styles.listaVentas}
       />
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={errorModalVisible}
+        onRequestClose={() => setErrorModalVisible(false)}
+      >
+        <View style={styles.modalBackground}>
+          <View style={styles.modalContainer}>
+            <Icon name="alert-circle" size={60} color="#FF6B6B" />
+            <Text style={styles.modalTitle}>Error</Text>
+            <Text style={styles.modalMessage}>{errorMessage}</Text>
+            <TouchableOpacity 
+              style={styles.modalButton}
+              onPress={() => setErrorModalVisible(false)}
+            >
+              <Text style={styles.modalButtonText}>Cerrar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -221,6 +246,41 @@ const styles = StyleSheet.create({
   total: {
     fontSize: 16,
     color: '#BDC3C7',
+  },
+  modalBackground: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContainer: {
+    backgroundColor: '#2D3A59',
+    borderRadius: 10,
+    padding: 20,
+    alignItems: 'center',
+    width: '80%',
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 10,
+  },
+  modalMessage: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  modalButton: {
+    backgroundColor: '#FF6B6B',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+  },
+  modalButtonText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
   },
 });
 

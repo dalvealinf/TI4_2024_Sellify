@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, Modal } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import { Switch } from 'react-native-paper';
 
@@ -13,10 +13,12 @@ export default function AddUserScreen({ navigation }) {
   const [role, setRole] = useState('user');
   const [isActive, setIsActive] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [successModalVisible, setSuccessModalVisible] = useState(false);
+  const [errorModalVisible, setErrorModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
 
   // Función para agregar usuario
   const handleAddUser = async () => {
-    // Verificar si todos los campos están completos antes de intentar el registro
     if (name && lastName && rut && email && password && phone) {
       setLoading(true);
 
@@ -46,15 +48,17 @@ export default function AddUserScreen({ navigation }) {
           throw new Error('Error en el registro');
         }
 
-        // Mostrar mensaje genérico de acción realizada
-        Alert.alert('Registro exitoso', 'El usuario fue registrado exitosamente.');
+        setModalMessage('El usuario fue registrado exitosamente.');
+        setSuccessModalVisible(true);
       } catch (error) {
-        Alert.alert('Error', 'No se pudo registrar el usuario. Por favor, intenta nuevamente.');
+        setModalMessage('No se pudo registrar el usuario. Por favor, intenta nuevamente.');
+        setErrorModalVisible(true);
       } finally {
         setLoading(false);
       }
     } else {
-      Alert.alert('Error', 'Por favor, rellena todos los campos.');
+      setModalMessage('Por favor, rellena todos los campos.');
+      setErrorModalVisible(true);
     }
   };
 
@@ -85,7 +89,7 @@ export default function AddUserScreen({ navigation }) {
           <Icon name="user" size={20} color="#fff" style={styles.inputIcon} />
           <TextInput
             style={styles.input}
-            placeholder="Apellido"
+             placeholder="Apellido"
             placeholderTextColor="#aaa"
             value={lastName}
             onChangeText={setLastName}
@@ -187,6 +191,50 @@ export default function AddUserScreen({ navigation }) {
         )}
       </View>
     </ScrollView>
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={successModalVisible}
+      onRequestClose={() => setSuccessModalVisible(false)}
+    >
+      <View style={styles.modalBackground}>
+        <View style={styles.modalContainer}>
+          <Icon name="check-circle" size={60} color="#4caf50" />
+          <Text style={styles.modalTitle}>¡Éxito!</Text>
+          <Text style={styles.modalMessage}>{modalMessage}</Text>
+          <TouchableOpacity 
+            style={styles.modalButton}
+            onPress={() => {
+              setSuccessModalVisible(false);
+              navigation.goBack();
+            }}
+          >
+            <Text style={styles.modalButtonText}>Aceptar</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={errorModalVisible}
+      onRequestClose={() => setErrorModalVisible(false)}
+    >
+      <View style={styles.modalBackground}>
+        <View style={styles.modalContainer}>
+          <Icon name="alert-circle" size={60} color="#FF6B6B" />
+          <Text style={styles.modalTitle}>Error</Text>
+          <Text style={styles.modalMessage}>{modalMessage}</Text>
+          <TouchableOpacity 
+            style={styles.modalButton}
+            onPress={() => setErrorModalVisible(false)}
+          >
+            <Text style={styles.modalButtonText}>Cerrar</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
     </View>
   );
 }
@@ -318,5 +366,40 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontSize: 16,
     color: '#ffffff',
+  },
+  modalBackground: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContainer: {
+    backgroundColor: '#2D3A59',
+    borderRadius: 10,
+    padding: 20,
+    alignItems: 'center',
+    width: '80%',
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 10,
+  },
+  modalMessage: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  modalButton: {
+    backgroundColor: '#FF6B6B',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+  },
+  modalButtonText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
   },
 });

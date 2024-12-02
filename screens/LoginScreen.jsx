@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, Dimensions, Animated, ActivityIndicator, Alert } from "react-native";
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, Dimensions, Animated, ActivityIndicator, Alert, Modal } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
@@ -14,6 +14,7 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const [rememberMe, setRememberMe] = useState(false);
+  const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const navigation = useNavigation();
 
   useEffect(() => {
@@ -163,6 +164,30 @@ export default function Login() {
           )}
         </TouchableOpacity>
       </Animated.View>
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={logoutModalVisible}
+        onRequestClose={() => setLogoutModalVisible(false)}
+      >
+        <View style={styles.modalBackground}>
+          <View style={styles.modalContainer}>
+            <Ionicons name="log-out" size={60} color="#4caf50" />
+            <Text style={styles.modalTitle}>Sesión Cerrada</Text>
+            <Text style={styles.modalMessage}>Se ha cerrado la sesión con éxito.</Text>
+            <TouchableOpacity 
+              style={styles.modalButton}
+              onPress={() => {
+                setLogoutModalVisible(false);
+                navigation.replace('Login');
+              }}
+            >
+              <Text style={styles.modalButtonText}>Aceptar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -288,5 +313,40 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  modalBackground: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContainer: {
+    backgroundColor: '#2D3A59',
+    borderRadius: 10,
+    padding: 20,
+    alignItems: 'center',
+    width: '80%',
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 10,
+  },
+  modalMessage: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  modalButton: {
+    backgroundColor: '#4caf50',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+  },
+  modalButtonText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
   },
 });

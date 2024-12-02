@@ -18,6 +18,8 @@ export default function BarcodeScannerPage({ navigation }) {
   const [modalVisible, setModalVisible] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const socketRef = useRef(null);
+  const [errorModalVisible, setErrorModalVisible] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   // Manejar el estado del escaneo cuando la screen está en uso
   useFocusEffect(
@@ -112,15 +114,18 @@ export default function BarcodeScannerPage({ navigation }) {
       socketRef.current.off('scan_response');
       socketRef.current.on('scan_response', (data) => {
         if (data.message === 'Escaneo iniciado') {
-          alert('Escaneo iniciado exitosamente en la web');
+          setErrorMessage('Escaneo iniciado exitosamente en la web');
+          setErrorModalVisible(true);
         } else {
-          alert('Error en el proceso de escaneo');
+          setErrorMessage('Error en el proceso de escaneo');
+          setErrorModalVisible(true);
         }
       });
 
       socketRef.current.on('connect_error', (error) => {
         console.error('Error de conexión WebSocket:', error);
-        alert('No se pudo conectar con la API');
+        setErrorMessage('No se pudo conectar con la API');
+        setErrorModalVisible(true);
       });
     }
   };
@@ -164,6 +169,27 @@ export default function BarcodeScannerPage({ navigation }) {
                 <Text style={styles.scanAgainButtonText}>Escanear de Nuevo</Text>
               </TouchableOpacity>
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={errorModalVisible}
+        onRequestClose={() => setErrorModalVisible(false)}
+      >
+        <View style={styles.modalBackground}>
+          <View style={styles.modalContainer}>
+            <Icon name="alert-circle" size={60} color="#FF6B6B" />
+            <Text style={styles.modalTitle}>Aviso</Text>
+            <Text style={styles.modalMessage}>{errorMessage}</Text>
+            <TouchableOpacity 
+              style={[styles.modalButton, { backgroundColor: '#FF6B6B' }]}
+              onPress={() => setErrorModalVisible(false)}
+            >
+              <Text style={styles.modalButtonText}>Aceptar</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -243,23 +269,32 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContainer: {
-    backgroundColor: 'white',
+    backgroundColor: '#2D3A59',
     borderRadius: 10,
     padding: 20,
     alignItems: 'center',
-    width: '90%',
-    maxWidth: 400,
+    width: '80%',
   },
   modalTitle: {
     fontSize: 22,
     fontWeight: 'bold',
-    marginTop: 10,
+    color: '#FFFFFF',
     marginBottom: 10,
   },
   modalMessage: {
     fontSize: 16,
+    color: '#FFFFFF',
     textAlign: 'center',
     marginBottom: 20,
+  },
+  modalButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+  },
+  modalButtonText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
   },
   modalButtonContainer: {
     flexDirection: 'column',

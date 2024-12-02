@@ -178,6 +178,11 @@ export default function EditProduct({ route, navigation }) {
     navigation.goBack();
   };
 
+  const showErrorModal = (message) => {
+    setErrorMessage(message);
+    setErrorModalVisible(true);
+  };
+
   return (
     <TouchableWithoutFeedback onPress={handleFieldPress}>
       <ScrollView contentContainerStyle={styles.container}>
@@ -206,11 +211,14 @@ export default function EditProduct({ route, navigation }) {
         >
           <View style={styles.modalBackground}>
             <View style={styles.modalContainer}>
-              <Icon name="alert-circle" size={60} color="#e74c3c" />
+              <Icon name="alert-circle" size={60} color="#FF6B6B" />
               <Text style={styles.modalTitle}>Error</Text>
               <Text style={styles.modalMessage}>{errorMessage}</Text>
-              <TouchableOpacity onPress={() => setErrorModalVisible(false)} style={styles.finishButton}>
-                <Text style={styles.finishButtonText}>Cerrar</Text>
+              <TouchableOpacity 
+                style={styles.modalButton}
+                onPress={() => setErrorModalVisible(false)}
+              >
+                <Text style={styles.modalButtonText}>Cerrar</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -491,31 +499,32 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContainer: {
-    backgroundColor: 'white',
+    backgroundColor: '#2D3A59',
     borderRadius: 10,
     padding: 20,
     alignItems: 'center',
+    width: '80%',
   },
   modalTitle: {
     fontSize: 22,
     fontWeight: 'bold',
-    marginTop: 10,
+    color: '#FFFFFF',
     marginBottom: 10,
   },
   modalMessage: {
     fontSize: 16,
+    color: '#FFFFFF',
     textAlign: 'center',
     marginBottom: 20,
   },
-  finishButton: {
-    backgroundColor: '#4caf50',
+  modalButton: {
+    backgroundColor: '#FF6B6B',
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 5,
-    marginTop: 10,
   },
-  finishButtonText: {
-    color: 'white',
+  modalButtonText: {
+    color: '#FFFFFF',
     fontWeight: 'bold',
   },
   switchContainer: {
